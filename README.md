@@ -1,5 +1,7 @@
 # PID Flight Lab
 
+**Live:** https://pid-flight-lab.netlify.app
+
 An interactive, single-page lesson set on PID controller tuning. You tune the altitude-hold loop of a simulated 1 kg quadcopter and watch what each gain does.
 
 ## What it covers
