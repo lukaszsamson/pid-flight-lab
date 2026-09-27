@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PID Flight Lab</title>
+<meta name="description" content="Interactive lessons on PID tuning with a simulated quadcopter altitude hold.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232553C9'/%3E%3Cpath d='M5 16h7M20 16h7' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='11' y='13' width='10' height='6' rx='2' fill='white'/%3E%3Cpath d='M16 24v4' stroke='white' stroke-width='2' stroke-dasharray='1 2'/%3E%3C/svg%3E">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+:root{
+  --bg:#EDF0F3; --panel:#FFFFFF; --panel-2:#F4F6F8; --ink:#16202A; --ink-2:#465361; --ink-3:#7A8693;
+  --line:#D6DCE2; --line-2:#E5E9ED;
+  --accent:#2553C9; --accent-soft:rgba(37,83,201,.12);
+  --thrust:#C4700C; --p:#0B877A; --i:#7446C2; --d:#C23760;
+  --good:#1D8547; --warn:#A86F12; --bad:#C3362B;
+  --sky-top:#C9DCEF; --sky-bot:#EEF3F8; --ground:#B7BFA3; --ground-2:#9CA684; --pad:#6E7560;
+  --drone:#1E2833; --rotor:rgba(30,40,51,.28);
+  --grid:rgba(22,32,42,.07); --grid-2:rgba(22,32,42,.16);
+  --sat:rgba(195,54,43,.08);
+  --shadow:0 1px 2px rgba(22,32,42,.06),0 4px 16px rgba(22,32,42,.05);
+  --f-display:"Saira Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1217; --panel:#141B22; --panel-2:#19222B; --ink:#E3E9EF; --ink-2:#A3AFBB; --ink-3:#6C7985;
+    --line:#26313C; --line-2:#1F2831;
+    --accent:#7098FF; --accent-soft:rgba(112,152,255,.16);
+    --thrust:#F0A443; --p:#39C7B3; --i:#AE8AF4; --d:#F07197;
+    --good:#4CC47E; --warn:#E2AE4A; --bad:#F2665A;
+    --sky-top:#08111C; --sky-bot:#172536; --ground:#28301F; --ground-2:#1E2517; --pad:#4B5540;
+    --drone:#D8E0E8; --rotor:rgba(216,224,232,.25);
+    --grid:rgba(227,233,239,.05); --grid-2:rgba(227,233,239,.13);
+    --sat:rgba(242,102,90,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1217; --panel:#141B22; --panel-2:#19222B; --ink:#E3E9EF; --ink-2:#A3AFBB; --ink-3:#6C7985;
+  --line:#26313C; --line-2:#1F2831;
+  --accent:#7098FF; --accent-soft:rgba(112,152,255,.16);
+  --thrust:#F0A443; --p:#39C7B3; --i:#AE8AF4; --d:#F07197;
+  --good:#4CC47E; --warn:#E2AE4A; --bad:#F2665A;
+  --sky-top:#08111C; --sky-bot:#172536; --ground:#28301F; --ground-2:#1E2517; --pad:#4B5540;
+  --drone:#D8E0E8; --rotor:rgba(216,224,232,.25);
+  --grid:rgba(227,233,239,.05); --grid-2:rgba(227,233,239,.13);
+  --sat:rgba(242,102,90,.10);
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 32px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding-block:18px 14px;max-width:1560px;margin-inline:auto}
+.top h1{font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.top h1 span{color:var(--accent)}
+.top p{margin:0;color:var(--ink-2);max-width:70ch}
+.formula{margin-left:auto;font-family:var(--f-mono);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.formula b{font-weight:500}
+.formula .kp{color:var(--p)}.formula .ki{color:var(--i)}.formula .kd{color:var(--d)}
+
+.layout{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr);gap:16px;max-width:1560px;margin-inline:auto;align-items:start}
+
+/* lessons */
+.lessons{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.lesson-nav{display:flex;flex-wrap:wrap;gap:4px;padding:12px;border-bottom:1px solid var(--line)}
+.lesson-nav button{width:32px;height:30px;border:1px solid var(--line);background:var(--panel-2);border-radius:6px;cursor:pointer;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.lesson-nav button:hover{border-color:var(--accent);color:var(--ink)}
+.lesson-nav button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.lesson-body{padding:16px 18px 8px;overflow-y:auto;flex:1}
+.lesson-body .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.lesson-body h2{font-size:26px;font-weight:700;line-height:1.1;margin:4px 0 10px}
+.lesson-body p{margin:0 0 10px}
+.lesson-body ul,.lesson-body ol{margin:0 0 10px;padding-left:20px}
+.lesson-body li{margin-bottom:4px}
+.lesson-body code{font-family:var(--f-mono);font-size:12.5px;background:var(--panel-2);border:1px solid var(--line-2);padding:0 4px;border-radius:4px}
+.lesson-body .try{background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin:12px 0}
+.lesson-body .try h3{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:4px}
+.lesson-body .try ul{margin:0}
+.lesson-body .note{font-size:13.5px;color:var(--ink-2);border-left:2px solid var(--line);padding-left:10px}
+.lesson-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel-2);border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14px;line-height:1.2}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:4px 9px;font-size:13px}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.spacer{flex:1}
+
+/* main */
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
+.card-h h3{font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);font-weight:600}
+.card-b{padding:10px 14px 14px}
+.sim-row{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:16px}
+.scene-card{display:flex;flex-direction:column;overflow:hidden}
+.scene-wrap{position:relative;height:470px;touch-action:none;cursor:crosshair}
+#scene{width:100%;height:100%;display:block}
+.scene-tools{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-top:1px solid var(--line);align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;background:var(--panel-2);padding:4px 9px;font-size:13px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.hint{font-size:12.5px;color:var(--ink-3);padding:0 10px 10px}
+
+.charts{display:flex;flex-direction:column}
+.chart{position:relative;border-bottom:1px solid var(--line-2)}
+.chart:last-child{border-bottom:0}
+.chart canvas{display:block;width:100%;height:150px}
+.chart-label{position:absolute;left:44px;top:6px;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;pointer-events:none;align-items:center}
+.chart-label .t{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:13px;color:var(--ink-2)}
+.key{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-family:var(--f-mono);font-size:11.5px}
+.key i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.key i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)!important;height:2px}
+
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--line)}
+.metric{padding:8px 12px;border-right:1px solid var(--line-2)}
+.metric:last-child{border-right:0}
+.metric .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.metric .v{font-family:var(--f-mono);font-size:17px;font-variant-numeric:tabular-nums}
+.metric .v.bad{color:var(--bad)}.metric .v.warn{color:var(--warn)}.metric .v.good{color:var(--good)}
+
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin-bottom:10px}
+.ctl label{font-size:14px;font-weight:600;display:flex;gap:6px;align-items:baseline}
+.ctl label small{font-weight:400;color:var(--ink-3);font-size:12px}
+.ctl output{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);min-width:6ch;text-align:right}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:2px 0}
+.ctl.kp input{accent-color:var(--p)}.ctl.ki input{accent-color:var(--i)}.ctl.kd input{accent-color:var(--d)}
+.ctl.kp label span{color:var(--p)}.ctl.ki label span{color:var(--i)}.ctl.kd label span{color:var(--d)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.row .lab{font-size:14px;font-weight:600;flex:1 1 100%}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.check small{font-weight:400;color:var(--ink-3)}
+
+.stab-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.pill{font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.08em;padding:3px 9px;border-radius:99px;border:1px solid currentColor}
+.pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
+#poles{width:100%;height:220px;display:block;border:1px solid var(--line-2);border-radius:6px;background:var(--panel-2)}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;margin-top:8px}
+.kv div{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dotted var(--line);padding-block:2px}
+.kv span:first-child{color:var(--ink-2)}
+.kv span:last-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.fine{font-size:12px;color:var(--ink-3);margin:8px 0 0}
+
+/* embedded lesson widgets */
+.widget{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:12px 0;background:var(--panel-2)}
+.widget h3{font-size:15px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.widget table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.widget th,.widget td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line-2);font-variant-numeric:tabular-nums}
+.widget th:first-child,.widget td:first-child{text-align:left}
+.widget td{font-family:var(--f-mono);font-size:12px}
+.widget td:first-child{font-family:var(--f-body);font-size:13px}
+.zn-read{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.zn-read div{background:var(--panel);border:1px solid var(--line-2);border-radius:6px;padding:4px 8px}
+.zn-read .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
+.zn-read .v{font-family:var(--f-mono);font-size:14px}
+.score{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.score div{display:flex;justify-content:space-between;gap:8px;font-size:13px;align-items:center}
+.score .mono{font-size:12px}
+.chip{font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid currentColor}
+.chip.pass{color:var(--good)}.chip.fail{color:var(--bad)}.chip.wait{color:var(--ink-3)}
+.loop-svg{width:100%;max-width:330px;height:auto;display:block;margin:6px 0 12px}
+.loop-svg text{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink-2)}
+.loop-svg .bx{fill:var(--panel);stroke:var(--line)}
+.loop-svg .bx.hi{stroke:var(--accent)}
+.loop-svg .ln{stroke:var(--ink-3);fill:none;stroke-width:1.3}
+.loop-svg .ah{fill:var(--ink-3)}
+.loop-svg .t-strong{fill:var(--ink);font-weight:500}
+
+@media (max-width:1100px){
+  .layout{grid-template-columns:1fr}
+  .lessons{position:static;max-height:none}
+  .lesson-body{max-height:none}
+}
+@media (max-width:760px){
+  .sim-row{grid-template-columns:1fr}
+  .scene-wrap{height:400px}
+  .metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .metric:nth-child(3){border-right:0}
+  .formula{margin-left:0;white-space:normal}
+  .top h1{font-size:26px}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>PID <span>Flight</span> Lab</h1>
+  <p>Tune the altitude-hold controller of a 1&nbsp;kg quadcopter. Each lesson loads a setup that shows one tuning problem you will meet on real hardware.</p>
+  <div class="formula" aria-label="PID law">u = <b class="kp">K<sub>p</sub>·e</b> + <b class="ki">K<sub>i</sub>∫e dt</b> + <b class="kd">K<sub>d</sub>·de/dt</b></div>
+</header>
+
+<div class="layout">
+  <aside class="lessons" aria-label="Lessons">
+    <nav class="lesson-nav" id="lessonNav"></nav>
+    <div class="lesson-body" id="lessonBody"></div>
+    <div class="lesson-actions">
+      <button class="btn" id="prevLesson" type="button">← Back</button>
+      <button class="btn primary" id="loadLesson" type="button">Load this setup</button>
+      <span class="spacer"></span>
+      <button class="btn" id="nextLesson" type="button">Next →</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="sim-row">
+      <section class="card scene-card" aria-label="Flight view">
+        <div class="scene-wrap" id="sceneWrap"><canvas id="scene"></canvas></div>
+        <div class="scene-tools">
+          <button class="btn small" id="playBtn" type="button" aria-pressed="false">Pause</button>
+          <div class="seg" id="speedSeg" role="group" aria-label="Simulation speed">
+            <button type="button" data-s="0.25">¼×</button><button type="button" data-s="0.5">½×</button><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="2">2×</button>
+          </div>
+          <button class="btn small" id="resetBtn" type="button">Reset</button>
+          <button class="btn small" id="soundBtn" type="button" aria-pressed="false">Sound</button>
+          <span class="spacer"></span>
+          <div class="seg" role="group" aria-label="Target altitude">
+            <button type="button" data-sp="2">2 m</button><button type="button" data-sp="5">5 m</button><button type="button" data-sp="8">8 m</button>
+          </div>
+        </div>
+        <div class="hint">Click the sky to set the target altitude. Drag the drone to push it around by hand.</div>
+      </section>
+
+      <section class="card charts" aria-label="Telemetry">
+        <div class="chart"><canvas id="chAlt"></canvas>
+          <div class="chart-label"><span class="t">Altitude</span>
+            <span class="key" style="color:var(--ink-3)"><i class="dash"></i>target</span>
+            <span class="key"><i style="background:var(--accent)"></i>altitude</span>
+            <span class="key"><i style="background:var(--ink-3);opacity:.5"></i>sensor</span></div></div>
+        <div class="chart"><canvas id="chThr"></canvas>
+          <div class="chart-label"><span class="t">Thrust</span>
+            <span class="key"><i style="background:var(--thrust);opacity:.45"></i>PID asks</span>
+            <span class="key"><i style="background:var(--thrust)"></i>motors give</span>
+            <span class="key" style="color:var(--ink-3)"><i class="dash"></i>hover</span></div></div>
+        <div class="chart"><canvas id="chPid"></canvas>
+          <div class="chart-label"><span class="t">Terms</span>
+            <span class="key"><i style="background:var(--p)"></i>P <b class="mono" id="lvP">0</b></span>
+            <span class="key"><i style="background:var(--i)"></i>I <b class="mono" id="lvI">0</b></span>
+            <span class="key"><i style="background:var(--d)"></i>D <b class="mono" id="lvD">0</b></span></div></div>
+        <div class="metrics" aria-label="Step response metrics">
+          <div class="metric"><div class="l">Overshoot</div><div class="v" id="mOS">—</div></div>
+          <div class="metric"><div class="l">Rise 10–90%</div><div class="v" id="mRise">—</div></div>
+          <div class="metric"><div class="l">Settle ±2%</div><div class="v" id="mSettle">—</div></div>
+          <div class="metric"><div class="l">Error now</div><div class="v" id="mErr">—</div></div>
+          <div class="metric"><div class="l">Motor jitter</div><div class="v" id="mJit">—</div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="controls">
+      <section class="card"><div class="card-h"><h3>Gains</h3></div><div class="card-b">
+        <div class="ctl kp"><label for="kp"><span>K<sub>p</sub></span> proportional <small>N/m</small></label><output id="kpO"></output><input type="range" id="kp" min="0" max="30" step="0.1"></div>
+        <div class="ctl ki"><label for="ki"><span>K<sub>i</sub></span> integral <small>N/(m·s)</small></label><output id="kiO"></output><input type="range" id="ki" min="0" max="30" step="0.1"></div>
+        <div class="ctl kd"><label for="kd"><span>K<sub>d</sub></span> derivative <small>N·s/m</small></label><output id="kdO"></output><input type="range" id="kd" min="0" max="15" step="0.05"></div>
+        <div class="row"><button class="btn small" id="zeroI" type="button">Reset integrator</button></div>
+      </div></section>
+
+      <section class="card"><div class="card-h"><h3>Controller</h3></div><div class="card-b">
+        <div class="row"><span class="lab">Derivative acts on</span>
+          <div class="seg" id="dSeg" role="group" aria-label="Derivative source"><button type="button" data-v="meas">measurement</button><button type="button" data-v="err">error</button></div></div>
+        <div class="ctl"><label for="tf">Derivative filter <small>τ<sub>f</sub></small></label><output id="tfO"></output><input type="range" id="tf" min="0" max="0.3" step="0.005"></div>
+        <div class="row"><span class="lab">Anti-windup</span>
+          <div class="seg" id="awSeg" role="group" aria-label="Anti-windup"><button type="button" data-v="none">off</button><button type="button" data-v="clamp">clamping</button><button type="button" data-v="back">back-calc</button></div></div>
+        <label class="check"><input type="checkbox" id="ff"> Hover feedforward <small>adds m·g for 1 kg</small></label>
+        <div class="row"><span class="lab">Control loop rate</span>
+          <div class="seg" id="rateSeg" role="group" aria-label="Control rate"><button type="button" data-v="10">10 Hz</button><button type="button" data-v="25">25</button><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button><button type="button" data-v="200">200</button></div></div>
+      </div></section>
+
+      <section class="card"><div class="card-h"><h3>Drone &amp; weather</h3></div><div class="card-b">
+        <div class="ctl"><label for="noise">Sensor noise <small>σ</small></label><output id="noiseO"></output><input type="range" id="noise" min="0" max="0.1" step="0.001"></div>
+        <div class="ctl"><label for="delay">Sensor delay</label><output id="delayO"></output><input type="range" id="delay" min="0" max="0.4" step="0.005"></div>
+        <div class="ctl"><label for="mass">Mass incl. payload</label><output id="massO"></output><input type="range" id="mass" min="0.5" max="2" step="0.05"></div>
+        <div class="ctl"><label for="wind">Steady wind <small>+ up / − down</small></label><output id="windO"></output><input type="range" id="wind" min="-8" max="8" step="0.1"></div>
+        <div class="row">
+          <button class="btn small" id="gustDown" type="button">Gust ↓</button>
+          <button class="btn small" id="gustUp" type="button">Gust ↑</button>
+          <button class="btn small" id="tetherBtn" type="button" aria-pressed="false">Tether to ground</button>
+        </div>
+      </div></section>
+
+      <section class="card"><div class="card-h"><h3>Stability</h3></div><div class="card-b">
+        <div class="stab-top"><span class="pill good" id="stabPill">STABLE</span><span id="stabText" style="font-size:13px;color:var(--ink-2)"></span></div>
+        <canvas id="poles" aria-label="Closed-loop pole map"></canvas>
+        <div class="kv">
+          <div><span>Damping ζ</span><span id="aZeta">—</span></div>
+          <div><span>Freq ω</span><span id="aW">—</span></div>
+          <div><span>Phase margin</span><span id="aPM">—</span></div>
+          <div><span>Gain margin</span><span id="aGM">—</span></div>
+        </div>
+        <p class="fine">Closed-loop poles of the linear model (dots trace K<sub>p</sub> from 0 to 30). Ignores thrust limits and the ground.</p>
+      </div></section>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ---------- constants ----------
+const G = 9.81, DRAG = 0.8, TAU_M = 0.08, TMAX = 25, M_NOM = 1, ZMAX = 10;
+const PHYS_DT = 0.001, REC_DT = 0.005, WINDOW = 20, NREC = Math.round(WINDOW / REC_DT);
+const HIST = 2048;
+
+const DEFAULTS = { kp:8, ki:4, kd:4, tf:0.02, dsrc:'meas', aw:'clamp', ff:false, rate:100,
+  noise:0.003, delay:0, mass:1, wind:0 };
+const cfg = { ...DEFAULTS };
+
+// ---------- simulation state ----------
+const sim = {};
+const rec = {};
+['t','z','sp','meas','uu','us','T','p','i','d'].forEach(k => rec[k] = new Float32Array(NREC));
+let recHead = 0, recCount = 0, recAcc = 0;
+let running = true, speed = 1;
+
+function resetSim(opts = {}) {
+  const z0 = opts.z ?? 0, hover = !!opts.hover;
+  Object.assign(sim, {
+    t: 0, z: z0, v: 0, T: hover ? cfg.mass * G : 0,
+    sp: opts.sp ?? 4, I: hover ? cfg.mass * G - (cfg.ff ? M_NOM * G : 0) : 0,
+    dF: 0, prevX: 0, first: true, u: 0, uu: 0, Pt: 0, Dt: 0, meas: z0, nextCtrl: 0,
+    hist: new Float32Array(HIST).fill(z0), hi: 0, grab: null, tether: false,
+    gusts: [], script: (opts.script || []).map(e => ({ ...e })), uEma: hover ? cfg.mass * G : 0, jitVar: 0,
+    impact: 0, flash: null,
+  });
+  sim.u = sim.T;
+  recHead = 0; recCount = 0; recAcc = 0;
+  beginStep(z0, sim.sp, 0);
+  setTetherUI(false);
+  zn.reset();
+}
+
+// step metrics
+let step = null;
+function beginStep(y0, r, t0) {
+  step = { t0, y0, r, maxProg: 0, t10: null, t90: null, lastOut: t0 };
+}
+function setSetpoint(v, trackStep = true) {
+  v = Math.max(0, Math.min(ZMAX, v));
+  sim.sp = v;
+  if (trackStep) beginStep(sim.z, v, sim.t);
+}
+
+// gaussian noise
+let spare = null;
+function randn() {
+  if (spare !== null) { const s = spare; spare = null; return s; }
+  let u, v, s; do { u = Math.random() * 2 - 1; v = Math.random() * 2 - 1; s = u*u + v*v; } while (s >= 1 || s === 0);
+  const m = Math.sqrt(-2 * Math.log(s) / s); spare = v * m; return u * m;
+}
+
+function controllerTick() {
+  const Ts = 1 / cfg.rate;
+  const lag = Math.min(HIST - 1, Math.round(cfg.delay / PHYS_DT));
+  const y = sim.hist[(sim.hi - lag + HIST) % HIST] + randn() * cfg.noise;
+  sim.meas = y;
+  const e = sim.sp - y;
+  const P = cfg.kp * e;
+  const x = cfg.dsrc === 'meas' ? -y : e;
+  let raw = sim.first ? 0 : (x - sim.prevX) / Ts;
+  sim.prevX = x; sim.first = false;
+  sim.dF = cfg.tf > 0 ? sim.dF + (Ts / (cfg.tf + Ts)) * (raw - sim.dF) : raw;
+  const D = cfg.kd * sim.dF;
+  const ff = cfg.ff ? M_NOM * G : 0;
+  const uu = ff + P + sim.I + D;
+  const us = Math.max(0, Math.min(TMAX, uu));
+  // integrator update with anti-windup
+  if (cfg.aw === 'none') sim.I += cfg.ki * e * Ts;
+  else if (cfg.aw === 'clamp') {
+    const pushingOut = (uu > TMAX && e > 0) || (uu < 0 && e < 0);
+    if (!pushingOut) sim.I += cfg.ki * e * Ts;
+  } else {
+    const Tt = 0.3;
+    sim.I += (cfg.ki * e + (us - uu) / Tt) * Ts;
+  }
+  sim.I = Math.max(-5000, Math.min(5000, sim.I));
+  sim.Pt = P; sim.Dt = D; sim.uu = uu; sim.u = us;
+  // jitter: rms of fast thrust chatter (u minus a 40 ms low-pass), averaged over ~0.5 s
+  sim.uEma += (Ts / (0.04 + Ts)) * (us - sim.uEma);
+  sim.jitVar += (Ts / 0.5) * ((us - sim.uEma) ** 2 - sim.jitVar);
+}
+
+function physicsStep() {
+  const dt = PHYS_DT;
+  // scripted events
+  while (sim.script.length && sim.script[0].t <= sim.t) sim.script.shift().fn();
+  if (sim.t >= sim.nextCtrl - 1e-9) { controllerTick(); sim.nextCtrl += 1 / cfg.rate; }
+  sim.T += (sim.u - sim.T) * dt / TAU_M;
+  let gust = 0;
+  for (const g of sim.gusts) if (sim.t >= g.t0 && sim.t < g.t0 + g.dur) gust += g.F * Math.sin(Math.PI * (sim.t - g.t0) / g.dur);
+  sim.gusts = sim.gusts.filter(g => sim.t < g.t0 + g.dur);
+  sim.gustNow = gust;
+  const zPrev = sim.z;
+  let target = sim.tether ? 0 : sim.grab;
+  if (target !== null && target !== undefined) {
+    const rateLim = sim.tether ? 3 : 25;
+    const dz = Math.max(-rateLim * dt, Math.min(rateLim * dt, (target - sim.z) * Math.min(1, dt * 18)));
+    sim.z = Math.max(0, sim.z + dz);
+    sim.v = (sim.z - zPrev) / dt;
+  } else {
+    const F = sim.T - cfg.mass * G - DRAG * sim.v + cfg.wind + gust;
+    sim.v += F / cfg.mass * dt;
+    sim.z += sim.v * dt;
+    if (sim.z <= 0) {
+      if (sim.v < -3.5) { sim.impact = Math.min(1, -sim.v / 10); sim.flash = { t: performance.now(), s: -sim.v }; }
+      sim.z = 0; if (sim.v < 0) sim.v = 0;
+    }
+    if (sim.z > 40) { sim.z = 40; sim.v = Math.min(sim.v, 0); }
+  }
+  sim.hi = (sim.hi + 1) % HIST; sim.hist[sim.hi] = sim.z;
+  sim.t += dt;
+  recAcc += dt;
+  if (recAcc >= REC_DT - 1e-9) { recAcc -= REC_DT; record(); }
+}
+
+function record() {
+  const h = recHead;
+  rec.t[h] = sim.t; rec.z[h] = sim.z; rec.sp[h] = sim.sp; rec.meas[h] = sim.meas;
+  rec.uu[h] = sim.uu; rec.us[h] = sim.u; rec.T[h] = sim.T;
+  rec.p[h] = sim.Pt; rec.i[h] = sim.I; rec.d[h] = sim.Dt;
+  recHead = (recHead + 1) % NREC; recCount = Math.min(NREC, recCount + 1);
+  // step metrics
+  if (step && Math.abs(step.r - step.y0) >= 0.2) {
+    const span = step.r - step.y0, prog = (sim.z - step.y0) / span;
+    if (prog > step.maxProg) step.maxProg = prog;
+    if (step.t10 === null && prog >= 0.1) step.t10 = sim.t;
+    if (step.t90 === null && prog >= 0.9) step.t90 = sim.t;
+    const band = Math.max(0.02 * Math.abs(span), 0.05);
+    if (Math.abs(sim.z - step.r) > band) step.lastOut = sim.t;
+  }
+  zn.sample(sim.t, sim.z);
+}
+
+// ---------- Ziegler–Nichols oscillation estimator ----------
+const zn = {
+  reset() { this.buf = []; },
+  sample(t, z) { if (!this.buf) this.buf = []; this.buf.push([t, z]); if (this.buf.length > 3000) this.buf.shift(); },
+  analyze() {
+    const b = (this.buf || []).filter(p => p[0] > sim.t - 12);
+    if (b.length < 400) return null;
+    const mean = b.reduce((s, p) => s + p[1], 0) / b.length;
+    const ups = []; let armed = false; const hyst = 0.03;
+    const peaks = []; let cur = -Infinity;
+    for (const [t, z] of b) {
+      const x = z - mean;
+      if (x < -hyst) { armed = true; if (cur > -Infinity) { peaks.push(cur); cur = -Infinity; } }
+      if (armed && x > 0) { ups.push(t); armed = false; }
+      if (x > 0) cur = Math.max(cur, x);
+    }
+    if (ups.length < 3) return { Tu: null, amp: 0, trend: 'none' };
+    const periods = []; for (let k = 1; k < ups.length; k++) periods.push(ups[k] - ups[k-1]);
+    const last = periods.slice(-3); const Tu = last.reduce((a, c) => a + c, 0) / last.length;
+    let trend = 'steady';
+    if (peaks.length >= 3) {
+      const r = peaks[peaks.length - 1] / peaks[peaks.length - 3];
+      trend = r > 1.15 ? 'growing' : r < 0.85 ? 'decaying' : 'sustained';
+    }
+    return { Tu, amp: Math.max(...peaks.slice(-2), 0), trend };
+  }
+};
+
+// ---------- linear analysis ----------
+const pmul = (a, b) => { const r = new Array(a.length + b.length - 1).fill(0); for (let i = 0; i < a.length; i++) for (let j = 0; j < b.length; j++) r[i+j] += a[i]*b[j]; return r; };
+const padd = (a, b) => { const n = Math.max(a.length, b.length), r = []; for (let i = 0; i < n; i++) r.push((a[i]||0) + (b[i]||0)); return r; };
+function roots(p) {
+  p = p.slice(); while (p.length > 1 && Math.abs(p[p.length-1]) < 1e-12) p.pop();
+  const n = p.length - 1; if (n < 1) return [];
+  const c = p.map(x => x / p[n]);
+  const R = 1 + Math.max(...c.slice(0, n).map(Math.abs));
+  const zr = [], zi = [];
+  for (let k = 0; k < n; k++) { const a = 2*Math.PI*k/n + 0.4; zr.push(R*0.9*Math.cos(a)); zi.push(R*0.9*Math.sin(a)); }
+  for (let it = 0; it < 400; it++) {
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      const xr = zr[i], xi = zi[i];
+      let vr = 1, vi = 0;
+      for (let k = n - 1; k >= 0; k--) { const nr = vr*xr - vi*xi + c[k], ni = vr*xi + vi*xr; vr = nr; vi = ni; }
+      let dr = 1, di = 0;
+      for (let j = 0; j < n; j++) if (j !== i) { const ar = xr - zr[j], ai = xi - zi[j]; const nr = dr*ar - di*ai, ni = dr*ai + di*ar; dr = nr; di = ni; }
+      const den = dr*dr + di*di || 1e-30;
+      const qr = (vr*dr + vi*di) / den, qi = (vi*dr - vr*di) / den;
+      zr[i] = xr - qr; zi[i] = xi - qi; moved += Math.abs(qr) + Math.abs(qi);
+    }
+    if (moved < 1e-10) break;
+  }
+  return zr.map((r, i) => [r, Math.abs(zi[i]) < 1e-7 ? 0 : zi[i]]);
+}
+function effDelay() { return cfg.delay + 0.5 / cfg.rate; }
+function charPoly(kp, ki, kd) {
+  const tf = cfg.tf, m = cfg.mass, L = effDelay();
+  let Nc, Dc;
+  if (ki > 0) { Nc = [ki, kp + ki*tf, kd + kp*tf]; Dc = [0, 1, tf]; }
+  else { Nc = [kp, kp*tf + kd]; Dc = [1, tf]; }
+  const Dp = pmul([1, TAU_M], [0, DRAG, m]);
+  let Nd = [1], Dd = [1];
+  if (L > 1e-6) { Nd = [1, -L/2, L*L/12]; Dd = [1, L/2, L*L/12]; }
+  return padd(pmul(pmul(Dc, Dp), Dd), pmul(Nc, Nd));
+}
+function margins() {
+  const m = cfg.mass, L = effDelay(), tf = cfg.tf;
+  let prev = null; let pm = Infinity, gm = Infinity, wc = null;
+  for (let k = 0; k <= 800; k++) {
+    const w = Math.pow(10, -2 + 5 * k / 800);
+    const den = 1 + tf*tf*w*w;
+    const cr = cfg.kp + cfg.kd * tf * w * w / den, ci = -cfg.ki / w + cfg.kd * w / den;
+    const cmag = Math.hypot(cr, ci), cph = Math.atan2(ci, cr);
+    const gmag = 1 / (w * Math.hypot(DRAG, m * w) * Math.hypot(1, TAU_M * w));
+    const gph = -Math.PI/2 - Math.atan2(m * w, DRAG) - Math.atan(TAU_M * w) - w * L;
+    const mag = cmag * gmag, ph = (cph + gph) * 180 / Math.PI;
+    if (prev) {
+      if ((prev.mag - 1) * (mag - 1) <= 0 && prev.mag !== mag) {
+        const f = (1 - prev.mag) / (mag - prev.mag); const phx = prev.ph + f * (ph - prev.ph);
+        const p = 180 + phx; if (p < pm) { pm = p; wc = prev.w + f * (w - prev.w); }
+      }
+      for (const lvl of [-180, -540]) {
+        if ((prev.ph - lvl) * (ph - lvl) <= 0 && prev.ph !== ph) {
+          const f = (lvl - prev.ph) / (ph - prev.ph); const mg = prev.mag + f * (mag - prev.mag);
+          if (mg < 1) gm = Math.min(gm, -20 * Math.log10(mg));
+        }
+      }
+    }
+    prev = { w, mag, ph };
+  }
+  return { pm, gm, wc };
+}
+let analysis = null;
+function analyze() {
+  const ps = roots(charPoly(cfg.kp, cfg.ki, cfg.kd));
+  const locus = [];
+  for (let k = 0; k <= 70; k++) {
+    const kp = 30 * Math.pow(k / 70, 1.6) + 0.05;
+    for (const r of roots(charPoly(kp, cfg.ki, cfg.kd))) locus.push([r[0], r[1], k / 70]);
+  }
+  let dom = ps.reduce((a, b) => (b[0] > a[0] ? b : a), [-Infinity, 0]);
+  // prefer the oscillatory one among near-equal real parts
+  const maxRe = dom[0];
+  let state = maxRe > 1e-3 ? 'bad' : maxRe > -0.05 ? 'warn' : 'good';
+  const osc = ps.filter(p => p[1] > 1e-6).sort((a, b) => b[0] - a[0])[0];
+  analysis = { ps, locus, dom, osc, state, mg: margins() };
+  drawPoles();
+  const pill = $('stabPill');
+  pill.className = 'pill ' + state;
+  pill.textContent = state === 'bad' ? 'UNSTABLE' : state === 'warn' ? 'MARGINAL' : 'STABLE';
+  const lp = osc || dom;
+  const wn = Math.hypot(lp[0], lp[1]);
+  const zeta = wn > 0 ? -lp[0] / wn : 1;
+  $('stabText').textContent = state === 'bad'
+    ? 'Oscillations grow until the motors saturate.'
+    : state === 'warn' ? 'Oscillations barely decay.'
+    : osc ? (zeta < 0.3 ? 'Stable but ringing.' : zeta < 0.6 ? 'Stable, some overshoot.' : 'Stable and well damped.') : 'Stable, no oscillatory mode.';
+  $('aZeta').textContent = osc ? zeta.toFixed(2) : '≥ 1';
+  $('aW').textContent = osc ? Math.abs(lp[1]).toFixed(2) + ' rad/s' : '—';
+  const { pm, gm } = analysis.mg;
+  $('aPM').textContent = isFinite(pm) ? pm.toFixed(0) + '°' : '∞';
+  $('aGM').textContent = isFinite(gm) ? gm.toFixed(1) + ' dB' : '∞';
+}
+
+// ---------- helpers & theme ----------
+const $ = id => document.getElementById(id);
+let C = {};
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  ['bg','panel','panel-2','ink','ink-2','ink-3','line','accent','thrust','p','i','d','good','warn','bad','sky-top','sky-bot','ground','ground-2','pad','drone','rotor','grid','grid-2','sat']
+    .forEach(k => C[k] = cs.getPropertyValue('--' + k).trim());
+  if (analysis) drawPoles();
+}
+readTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTheme);
+new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+function fitCanvas(cv) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- scene ----------
+const sceneCv = $('scene');
+const particles = [];
+const windStreaks = Array.from({ length: 34 }, () => ({ x: Math.random(), y: Math.random(), l: 0.4 + Math.random() * 0.6 }));
+let rotorPhase = 0;
+function sceneGeom(w, h) {
+  const top = 22, groundH = 46, bottom = h - groundH;
+  const scale = (bottom - top) / ZMAX;
+  return { top, bottom, scale, yOf: z => bottom - z * scale, zOf: y => (bottom - y) / scale, cx: w * 0.56 };
+}
+function drawScene(frameDt) {
+  const { ctx, w, h } = fitCanvas(sceneCv);
+  const g = sceneGeom(w, h);
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, g.bottom);
+  sky.addColorStop(0, C['sky-top']); sky.addColorStop(1, C['sky-bot']);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+  // wind streaks
+  const windF = cfg.wind + (sim.gustNow || 0);
+  if (Math.abs(windF) > 0.2) {
+    ctx.strokeStyle = C['ink-3']; ctx.lineWidth = 1;
+    const vel = windF * 0.012;
+    for (const s of windStreaks) {
+      if (!reduceMotion && running) s.y -= vel * frameDt * 60 * 0.4 * speed;
+      if (s.y < 0) s.y += 1; if (s.y > 1) s.y -= 1;
+      const x = 46 + s.x * (w - 56), y = g.top + s.y * (g.bottom - g.top);
+      const len = Math.min(60, Math.abs(windF) * 4 * s.l + 6);
+      ctx.globalAlpha = Math.min(0.55, Math.abs(windF) / 12 + 0.1);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + Math.sign(windF) * len); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // altitude ruler
+  ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let m = 0; m <= ZMAX; m++) {
+    const y = g.yOf(m);
+    ctx.strokeStyle = m % 5 === 0 ? C['grid-2'] : C.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(38, y + 0.5); ctx.lineTo(w, y + 0.5); ctx.stroke();
+    ctx.fillStyle = C['ink-3']; ctx.fillText(m + ' m', 32, y);
+  }
+  // ground
+  ctx.fillStyle = C.ground; ctx.fillRect(0, g.bottom, w, h - g.bottom);
+  ctx.fillStyle = C['ground-2']; ctx.fillRect(0, g.bottom, w, 3);
+  ctx.fillStyle = C.pad; ctx.fillRect(g.cx - 44, g.bottom, 88, 6);
+  ctx.textAlign = 'center'; ctx.fillStyle = C['ink-2']; ctx.font = '600 11px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  ctx.fillText('PAD', g.cx, g.bottom + 22);
+  // setpoint
+  const ys = g.yOf(sim.sp);
+  ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(40, ys); ctx.lineTo(w, ys); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = C.accent; ctx.beginPath(); ctx.moveTo(w - 4, ys); ctx.lineTo(w - 14, ys - 7); ctx.lineTo(w - 14, ys + 7); ctx.fill();
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('TARGET ' + sim.sp.toFixed(2) + ' m', w - 18, ys - 4);
+
+  // drone
+  const zVis = Math.min(sim.z, ZMAX + 0.8);
+  const jit = Math.sqrt(Math.max(0, sim.jitVar));
+  const shake = reduceMotion ? 0 : Math.min(3, jit * 0.5);
+  const dx = g.cx + (Math.random() - 0.5) * shake, dy = g.yOf(zVis) - 16 + (Math.random() - 0.5) * shake;
+  const thr = sim.T / TMAX;
+  // downwash particles
+  if (running && !reduceMotion) {
+    const n = Math.round(thr * 5 * speed);
+    for (let k = 0; k < n; k++) for (const side of [-1, 1]) particles.push({ x: dx + side * 38 + (Math.random() - 0.5) * 18, y: dy + 6, vy: 2 + thr * 6 + Math.random() * 2, life: 1 });
+  }
+  ctx.fillStyle = C['ink-3'];
+  for (let k = particles.length - 1; k >= 0; k--) {
+    const p = particles[k];
+    if (running) { p.y += p.vy * speed; p.life -= 0.03 * speed; }
+    if (p.y > g.bottom) { p.y = g.bottom; p.x += (p.x > dx ? 1 : -1) * 2; }
+    if (p.life <= 0) { particles.splice(k, 1); continue; }
+    ctx.globalAlpha = p.life * 0.35; ctx.fillRect(p.x, p.y, 1.6, 1.6);
+  }
+  ctx.globalAlpha = 1;
+  if (particles.length > 600) particles.splice(0, particles.length - 600);
+  // tether rope
+  if (sim.tether) {
+    ctx.strokeStyle = C.thrust; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(dx, dy + 12);
+    ctx.quadraticCurveTo(dx + 10, (dy + g.bottom) / 2, dx, g.bottom); ctx.stroke();
+    ctx.fillStyle = C.thrust; ctx.fillRect(dx - 5, g.bottom - 4, 10, 6);
+  }
+  if (sim.grab !== null) {
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(dx, dy, 34, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // payload
+  if (cfg.mass > 1.02) {
+    const s = 10 + (cfg.mass - 1) * 14;
+    ctx.strokeStyle = C['ink-3']; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dx - 6, dy + 8); ctx.lineTo(dx - s/2 + 2, dy + 18); ctx.moveTo(dx + 6, dy + 8); ctx.lineTo(dx + s/2 - 2, dy + 18); ctx.stroke();
+    ctx.fillStyle = C.thrust; ctx.fillRect(dx - s/2, dy + 18, s, s * 0.8);
+  }
+  // arms and body
+  ctx.fillStyle = C.drone; ctx.strokeStyle = C.drone; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(dx - 38, dy); ctx.lineTo(dx + 38, dy); ctx.stroke();
+  roundRect(ctx, dx - 16, dy - 7, 32, 14, 5); ctx.fill();
+  ctx.fillStyle = C.accent; ctx.fillRect(dx - 3, dy - 2, 6, 4);
+  // legs
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(dx - 10, dy + 7); ctx.lineTo(dx - 16, dy + 16); ctx.moveTo(dx + 10, dy + 7); ctx.lineTo(dx + 16, dy + 16); ctx.stroke();
+  // rotors
+  if (running) rotorPhase += thr * 1.4 * speed;
+  for (const side of [-1, 1]) {
+    const rx = dx + side * 38;
+    ctx.fillStyle = C.drone; ctx.fillRect(rx - 2, dy - 9, 4, 9);
+    const spin = thr > 0.01;
+    const bw = spin ? 26 : 22 * Math.abs(Math.cos(rotorPhase));
+    ctx.fillStyle = spin ? C.rotor : C.drone;
+    ctx.beginPath(); ctx.ellipse(rx, dy - 10, Math.max(3, bw), spin ? 3.2 : 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    // thrust flame bar under motors
+    const len = thr * 34;
+    const grad = ctx.createLinearGradient(0, dy + 2, 0, dy + 2 + len);
+    grad.addColorStop(0, C.thrust); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad; ctx.globalAlpha = 0.55;
+    ctx.fillRect(rx - 3, dy + 3, 6, len); ctx.globalAlpha = 1;
+  }
+  ctx.lineCap = 'butt';
+  if (sim.z > ZMAX + 0.8) {
+    ctx.fillStyle = C.bad; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('▲ ' + sim.z.toFixed(1) + ' m (off the scale)', g.cx, 4);
+  }
+  // readouts
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = C.ink;
+  ctx.font = '500 12px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  const lines = [
+    ['ALT', sim.z.toFixed(2) + ' m'], ['VEL', (sim.v >= 0 ? '+' : '') + sim.v.toFixed(2) + ' m/s'],
+    ['THR', sim.T.toFixed(1) + ' / ' + TMAX + ' N'], ['T', sim.t.toFixed(1) + ' s'],
+  ];
+  lines.forEach(([k, v], idx) => {
+    ctx.fillStyle = C['ink-3']; ctx.fillText(k, 48, 8 + idx * 16);
+    ctx.fillStyle = C.ink; ctx.fillText(v, 80, 8 + idx * 16);
+  });
+  const sat = sim.uu > TMAX + 0.01 || sim.uu < -0.01;
+  const tags = [];
+  if (sat) tags.push(['SATURATED', C.bad]);
+  if (sim.tether) tags.push(['TETHERED', C.thrust]);
+  if (sim.grab !== null) tags.push(['HAND ON DRONE', C.ink]);
+  if (!running) tags.push(['PAUSED', C['ink-2']]);
+  tags.forEach(([txt, col], idx) => {
+    ctx.fillStyle = col; ctx.fillText(txt, 48, 76 + idx * 16);
+  });
+  if (sim.flash && performance.now() - sim.flash.t < 1600) {
+    ctx.fillStyle = C.bad; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('HARD LANDING ' + sim.flash.s.toFixed(1) + ' m/s', g.cx, g.bottom - 4);
+  }
+}
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+// scene interaction
+let drag = null;
+const sceneWrap = $('sceneWrap');
+sceneWrap.addEventListener('pointerdown', ev => {
+  const r = sceneCv.getBoundingClientRect();
+  const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  const g = sceneGeom(r.width, r.height);
+  const droneY = g.yOf(Math.min(sim.z, ZMAX + 0.8)) - 16;
+  sceneWrap.setPointerCapture(ev.pointerId);
+  if (Math.abs(x - g.cx) < 52 && Math.abs(y - droneY) < 30) {
+    drag = { kind: 'drone' }; sim.grab = Math.max(0, g.zOf(y + 16));
+  } else {
+    drag = { kind: 'sp', y0: sim.z, t0: sim.t };
+    setSetpoint(g.zOf(y), false);
+  }
+});
+sceneWrap.addEventListener('pointermove', ev => {
+  if (!drag) return;
+  const r = sceneCv.getBoundingClientRect(); const g = sceneGeom(r.width, r.height);
+  const y = ev.clientY - r.top;
+  if (drag.kind === 'drone') sim.grab = Math.max(0, Math.min(ZMAX + 1, g.zOf(y + 16)));
+  else setSetpoint(g.zOf(y), false);
+});
+const endDrag = () => {
+  if (!drag) return;
+  if (drag.kind === 'drone') sim.grab = null;
+  else beginStep(drag.y0, sim.sp, drag.t0);
+  drag = null;
+};
+sceneWrap.addEventListener('pointerup', endDrag);
+sceneWrap.addEventListener('pointercancel', endDrag);
+
+// ---------- charts ----------
+function chartFrame(cv, lo, hi) {
+  const { ctx, w, h } = fitCanvas(cv);
+  const L = 40, R = 8, T = 26, B = 16;
+  const tNow = sim.t, t0 = Math.max(0, tNow - WINDOW), t1 = Math.max(WINDOW, tNow);
+  const xOf = t => L + (t - (t1 - WINDOW)) / WINDOW * (w - L - R);
+  const yOf = v => T + (hi - v) / (hi - lo) * (h - T - B);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h, L, R, T, B, xOf, yOf, t0, t1, lo, hi };
+}
+function gridY(f, ticks, unit) {
+  const { ctx, w, L, R, yOf } = f;
+  ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const v of ticks) {
+    const y = Math.round(yOf(v)) + 0.5;
+    ctx.strokeStyle = v === 0 ? C['grid-2'] : C.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(w - R, y); ctx.stroke();
+    ctx.fillStyle = C['ink-3']; ctx.fillText(v + unit, L - 5, y);
+  }
+  // time ticks
+  const { t1, xOf, h } = f;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  for (let t = Math.ceil((t1 - WINDOW) / 5) * 5; t <= t1; t += 5) {
+    const x = Math.round(xOf(t)) + 0.5;
+    ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(x, f.T); ctx.lineTo(x, h - f.B); ctx.stroke();
+    ctx.fillStyle = C['ink-3']; ctx.fillText(t + 's', x, h - 2);
+  }
+}
+function series(f, arr, color, width = 1.5, alpha = 1, dash = null) {
+  if (recCount < 2) return;
+  const { ctx, xOf, yOf, lo, hi } = f;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(f.L, f.T - 2, f.w - f.L - f.R, f.h - f.T - f.B + 4); ctx.clip();
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.globalAlpha = alpha; ctx.lineJoin = 'round';
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath();
+  const start = (recHead - recCount + NREC) % NREC;
+  const pad = (hi - lo) * 0.05;
+  for (let k = 0; k < recCount; k++) {
+    const idx = (start + k) % NREC;
+    const v = Math.max(lo - pad, Math.min(hi + pad, arr[idx]));
+    const x = xOf(rec.t[idx]), y = yOf(v);
+    k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.stroke(); ctx.restore();
+}
+let pidRange = [-20, 30];
+function drawCharts() {
+  // altitude
+  let f = chartFrame($('chAlt'), 0, ZMAX);
+  gridY(f, [0, 2.5, 5, 7.5, 10], '');
+  if (cfg.noise > 0.004 || cfg.delay > 0) series(f, rec.meas, C['ink-3'], 1, 0.45);
+  series(f, rec.sp, C['ink-3'], 1.4, 1, [5, 4]);
+  series(f, rec.z, C.accent, 2);
+  // thrust
+  f = chartFrame($('chThr'), -10, 35);
+  f.ctx.fillStyle = C.sat;
+  f.ctx.fillRect(f.L, f.yOf(35), f.w - f.L - f.R, f.yOf(TMAX) - f.yOf(35));
+  f.ctx.fillRect(f.L, f.yOf(0), f.w - f.L - f.R, f.yOf(-10) - f.yOf(0));
+  gridY(f, [0, 10, 20, 25], '');
+  f.ctx.fillStyle = C.bad; f.ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  f.ctx.textAlign = 'right'; f.ctx.textBaseline = 'bottom'; f.ctx.globalAlpha = 0.8;
+  f.ctx.fillText('motor limit', f.w - f.R - 4, f.yOf(TMAX) - 2); f.ctx.globalAlpha = 1;
+  const hov = cfg.mass * G;
+  f.ctx.strokeStyle = C['ink-3']; f.ctx.setLineDash([4, 4]); f.ctx.beginPath(); f.ctx.moveTo(f.L, f.yOf(hov)); f.ctx.lineTo(f.w - f.R, f.yOf(hov)); f.ctx.stroke(); f.ctx.setLineDash([]);
+  series(f, rec.uu, C.thrust, 1.2, 0.4);
+  series(f, rec.T, C.thrust, 2);
+  // terms, auto-range
+  let lo = 0, hi = 0;
+  const start = (recHead - recCount + NREC) % NREC;
+  for (let k = 0; k < recCount; k += 2) {
+    const idx = (start + k) % NREC;
+    for (const a of [rec.p, rec.i, rec.d]) { const v = a[idx]; if (v < lo) lo = v; if (v > hi) hi = v; }
+  }
+  lo = Math.max(-120, Math.min(-5, lo * 1.1)); hi = Math.min(150, Math.max(15, hi * 1.1));
+  pidRange[0] += (lo - pidRange[0]) * 0.15; pidRange[1] += (hi - pidRange[1]) * 0.15;
+  f = chartFrame($('chPid'), pidRange[0], pidRange[1]);
+  const span = pidRange[1] - pidRange[0];
+  const stepT = span > 150 ? 50 : span > 60 ? 20 : 10;
+  const ticks = []; for (let v = Math.ceil(pidRange[0] / stepT) * stepT; v <= pidRange[1]; v += stepT) ticks.push(v);
+  gridY(f, ticks, '');
+  series(f, rec.p, C.p, 1.5);
+  series(f, rec.d, C.d, 1.5);
+  series(f, rec.i, C.i, 2);
+}
+
+// ---------- pole map ----------
+function drawPoles() {
+  if (!analysis) return;
+  const cv = $('poles');
+  const { ctx, w, h } = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h);
+  const near = analysis.ps.filter(p => Math.hypot(p[0], p[1]) < 25);
+  let R = Math.max(4, ...near.map(p => Math.max(Math.abs(p[0]) * 1.2, Math.abs(p[1]) * 1.35)));
+  R = Math.min(R, 18);
+  const xmin = -R, xmax = R * 0.45;
+  const sx = w / (xmax - xmin);
+  const yr = (h / 2) / sx;
+  const X = x => (x - xmin) * sx, Y = y => h / 2 - y * sx;
+  // unstable half plane
+  ctx.fillStyle = C.sat; ctx.fillRect(X(0), 0, w - X(0), h);
+  // damping guide ζ = 0.7 wedge
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  for (let x = Math.ceil(xmin); x <= xmax; x++) { ctx.beginPath(); ctx.moveTo(X(x) + .5, 0); ctx.lineTo(X(x) + .5, h); ctx.stroke(); }
+  for (let y = -Math.floor(yr); y <= yr; y++) { ctx.beginPath(); ctx.moveTo(0, Y(y) + .5); ctx.lineTo(w, Y(y) + .5); ctx.stroke(); }
+  ctx.strokeStyle = C.good; ctx.globalAlpha = 0.5; ctx.setLineDash([3, 4]);
+  const th = Math.acos(0.7);
+  for (const s of [1, -1]) { ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(-R * 2), Y(s * R * 2 * Math.tan(th))); ctx.stroke(); }
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.strokeStyle = C['grid-2'];
+  ctx.beginPath(); ctx.moveTo(0, Y(0) + .5); ctx.lineTo(w, Y(0) + .5); ctx.moveTo(X(0) + .5, 0); ctx.lineTo(X(0) + .5, h); ctx.stroke();
+  const mono = getComputedStyle(document.body).getPropertyValue('--f-mono');
+  ctx.font = '10px ' + mono; ctx.fillStyle = C['ink-3'];
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('unstable', w - 4, 4);
+  ctx.textAlign = 'left'; ctx.fillText('stable', 4, 4);
+  ctx.fillStyle = C.good; ctx.textBaseline = 'bottom'; ctx.fillText('ζ = 0.7', 4, h - 4);
+  ctx.fillStyle = C['ink-3']; ctx.textAlign = 'right'; ctx.fillText('Re  (1/s)', w - 4, h - 4);
+  // locus
+  for (const [re, im, k] of analysis.locus) {
+    if (re < xmin || re > xmax || Math.abs(im) > yr) continue;
+    ctx.fillStyle = C.p; ctx.globalAlpha = 0.12 + 0.3 * k;
+    ctx.fillRect(X(re) - 1, Y(im) - 1, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  // poles
+  for (const [re, im] of analysis.ps) {
+    let x = X(re), y = Y(im);
+    const off = re < xmin || re > xmax || Math.abs(im) > yr;
+    const col = re > 1e-3 ? C.bad : re > -0.05 ? C.warn : C.ink;
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+    if (off) {
+      x = Math.max(8, Math.min(w - 8, x)); y = Math.max(8, Math.min(h - 8, y));
+      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x - 5, y); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.globalAlpha = 0.5; ctx.fill(); ctx.globalAlpha = 1;
+    } else {
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
+    }
+  }
+}
+
+// ---------- metrics ----------
+function updateMetrics() {
+  const set = (id, txt, cls = '') => { const el = $(id); el.textContent = txt; el.className = 'v ' + cls; };
+  if (step && Math.abs(step.r - step.y0) >= 0.2) {
+    const os = Math.max(0, step.maxProg - 1) * 100;
+    set('mOS', os.toFixed(1) + '%', os > 20 ? 'bad' : os > 5 ? 'warn' : 'good');
+    set('mRise', step.t90 !== null && step.t10 !== null ? (step.t90 - step.t10).toFixed(2) + ' s' : '…');
+    const settled = sim.t - step.lastOut > 0.3;
+    const ts = step.lastOut - step.t0;
+    set('mSettle', settled ? ts.toFixed(2) + ' s' : '…', settled ? (ts > 8 ? 'warn' : 'good') : '');
+  } else { set('mOS', '—'); set('mRise', '—'); set('mSettle', '—'); }
+  const err = sim.sp - sim.z;
+  set('mErr', (err >= 0 ? '+' : '') + err.toFixed(2) + ' m', Math.abs(err) > 0.5 ? 'warn' : '');
+  const jit = Math.sqrt(Math.max(0, sim.jitVar));
+  set('mJit', jit.toFixed(2) + ' N', jit > 2 ? 'bad' : jit > 0.7 ? 'warn' : '');
+  $('lvP').textContent = sim.Pt.toFixed(1); $('lvI').textContent = sim.I.toFixed(1); $('lvD').textContent = sim.Dt.toFixed(1);
+  if (typeof lessonTick === 'function') lessonTick();
+}
+
+// ---------- sound ----------
+let audio = null;
+function toggleSound() {
+  if (!audio) {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const gain = ac.createGain(); gain.gain.value = 0;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+      const o1 = ac.createOscillator(), o2 = ac.createOscillator();
+      o1.type = 'sawtooth'; o2.type = 'sawtooth'; o2.detune.value = 14;
+      o1.connect(lp); o2.connect(lp); lp.connect(gain); gain.connect(ac.destination);
+      o1.start(); o2.start();
+      audio = { ac, gain, o1, o2, on: false };
+    } catch (e) { return; }
+  }
+  audio.on = !audio.on;
+  if (audio.on) audio.ac.resume();
+  $('soundBtn').setAttribute('aria-pressed', String(audio.on));
+}
+function updateSound() {
+  if (!audio) return;
+  const now = audio.ac.currentTime;
+  const thr = sim.T / TMAX;
+  const vol = audio.on && running ? 0.015 + thr * 0.06 : 0;
+  audio.gain.gain.setTargetAtTime(vol, now, 0.03);
+  const f = 55 + sim.T * 7;
+  audio.o1.frequency.setTargetAtTime(f, now, 0.01);
+  audio.o2.frequency.setTargetAtTime(f * 1.5, now, 0.01);
+}
+
+// ---------- main loop ----------
+let last = performance.now(), metricAcc = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (running) {
+    const n = Math.round(dt * speed / PHYS_DT);
+    for (let k = 0; k < n; k++) physicsStep();
+  }
+  drawScene(dt);
+  drawCharts();
+  metricAcc += dt;
+  if (metricAcc > 0.1) { metricAcc = 0; updateMetrics(); }
+  updateSound();
+  requestAnimationFrame(frame);
+}
+
+// ---------- controls binding ----------
+const sliders = {
+  kp: v => v.toFixed(1), ki: v => v.toFixed(1), kd: v => v.toFixed(2),
+  tf: v => v === 0 ? 'off' : (v * 1000).toFixed(0) + ' ms',
+  noise: v => (v * 100).toFixed(1) + ' cm', delay: v => (v * 1000).toFixed(0) + ' ms',
+  mass: v => v.toFixed(2) + ' kg', wind: v => (v > 0 ? '+' : '') + v.toFixed(1) + ' N',
+};
+const analysisKeys = new Set(['kp', 'ki', 'kd', 'tf', 'delay', 'mass']);
+let analyzePending = false;
+function scheduleAnalyze() { if (analyzePending) return; analyzePending = true; requestAnimationFrame(() => { analyzePending = false; analyze(); }); }
+for (const k of Object.keys(sliders)) {
+  $(k).addEventListener('input', () => {
+    cfg[k] = parseFloat($(k).value);
+    $(k + 'O').textContent = sliders[k](cfg[k]);
+    if (analysisKeys.has(k)) scheduleAnalyze();
+  });
+}
+function segBind(id, key, parse = v => v, after) {
+  $(id).addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    cfg[key] = parse(b.dataset.v); syncUI(); if (after) after();
+  });
+}
+segBind('dSeg', 'dsrc', v => v, () => { sim.first = true; });
+segBind('awSeg', 'aw');
+segBind('rateSeg', 'rate', v => parseInt(v, 10), () => { sim.nextCtrl = sim.t; scheduleAnalyze(); });
+$('ff').addEventListener('change', () => {
+  const was = cfg.ff; cfg.ff = $('ff').checked;
+  // bumpless: move the integrator so total output stays the same
+  if (was !== cfg.ff) sim.I += (was ? 1 : -1) * M_NOM * G;
+});
+function syncUI() {
+  for (const k of Object.keys(sliders)) { $(k).value = cfg[k]; $(k + 'O').textContent = sliders[k](cfg[k]); }
+  const mark = (id, v) => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
+  mark('dSeg', cfg.dsrc); mark('awSeg', cfg.aw); mark('rateSeg', cfg.rate);
+  $('ff').checked = cfg.ff;
+}
+$('zeroI').onclick = () => { sim.I = 0; };
+$('playBtn').onclick = () => { running = !running; $('playBtn').textContent = running ? 'Pause' : 'Play'; $('playBtn').setAttribute('aria-pressed', String(!running)); last = performance.now(); };
+$('speedSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  speed = parseFloat(b.dataset.s);
+  $('speedSeg').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('resetBtn').onclick = () => resetSim({ z: 0, sp: sim.sp });
+$('soundBtn').onclick = toggleSound;
+document.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => setSetpoint(parseFloat(b.dataset.sp)));
+function gust(F) { sim.gusts.push({ t0: sim.t, dur: 0.6, F }); }
+$('gustDown').onclick = () => gust(-22);
+$('gustUp').onclick = () => gust(18);
+function setTetherUI(on) { $('tetherBtn').setAttribute('aria-pressed', String(on)); $('tetherBtn').textContent = on ? 'Release tether' : 'Tether to ground'; }
+function setTether(on) { sim.tether = on; setTetherUI(on); }
+$('tetherBtn').onclick = () => setTether(!sim.tether);
+
+// ---------- lessons ----------
+const loopSVG = `
+<svg class="loop-svg" viewBox="0 0 320 120" role="img" aria-label="Feedback loop: target minus sensor reading gives error, PID computes thrust, motors lift drone, sensor measures altitude">
+ <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0 0 L8 4 L0 8 z"/></marker></defs>
+ <text x="2" y="34">target r</text>
+ <line class="ln" x1="8" y1="44" x2="42" y2="44" marker-end="url(#ah)"/>
+ <circle class="bx" cx="52" cy="44" r="9"/><text x="47" y="48" class="t-strong">Σ</text>
+ <text x="62" y="36">e</text>
+ <line class="ln" x1="61" y1="44" x2="84" y2="44" marker-end="url(#ah)"/>
+ <rect class="bx hi" x="86" y="30" width="54" height="28" rx="4"/><text x="102" y="48" class="t-strong">PID</text>
+ <line class="ln" x1="140" y1="44" x2="160" y2="44" marker-end="url(#ah)"/><text x="143" y="38">u</text>
+ <rect class="bx" x="162" y="30" width="58" height="28" rx="4"/><text x="170" y="48">motors</text>
+ <line class="ln" x1="220" y1="44" x2="240" y2="44" marker-end="url(#ah)"/><text x="223" y="38">T</text>
+ <rect class="bx" x="242" y="30" width="56" height="28" rx="4"/><text x="252" y="48">drone</text>
+ <line class="ln" x1="298" y1="44" x2="312" y2="44"/><line class="ln" x1="312" y1="44" x2="312" y2="94"/>
+ <line class="ln" x1="312" y1="94" x2="226" y2="94" marker-end="url(#ah)"/><text x="290" y="88">z</text>
+ <rect class="bx" x="162" y="80" width="62" height="28" rx="4"/><text x="170" y="98">sensor</text>
+ <line class="ln" x1="162" y1="94" x2="52" y2="94"/><line class="ln" x1="52" y1="94" x2="52" y2="55" marker-end="url(#ah)"/>
+ <text x="58" y="88">y (noisy, late)</text><text x="40" y="70">−</text>
+ <text x="170" y="22">wind, payload</text><line class="ln" x1="270" y1="18" x2="270" y2="28" marker-end="url(#ah)"/><line class="ln" x1="232" y1="18" x2="270" y2="18"/>
+</svg>`;
+
+const L = [];
+L.push({ title: 'The control loop', preset: { start: { z: 0, sp: 4 } },
+  html: `<p>The drone hangs from four propellers that can push at most <b>25 N</b>. It weighs 1 kg, so it needs <b>9.81 N</b> just to hover. An altimeter measures its height and a PID controller decides the thrust <em>u</em> many times per second.</p>
+  ${loopSVG}
+  <p>The controller only sees the <b>error</b> <code>e = target − measured altitude</code>. Each term reacts to a different view of it:</p>
+  <ul><li><b style="color:var(--p)">P</b> reacts to the error now.</li><li><b style="color:var(--i)">I</b> reacts to the error accumulated over time.</li><li><b style="color:var(--d)">D</b> reacts to how fast the error is changing.</li></ul>
+  <div class="try"><h3>Try it</h3><ul><li>Click higher in the sky to move the target. Watch the thrust and the three terms respond.</li><li>Drag the drone down by hand and let go.</li><li>The lessons after this one each break the tuning on purpose so you can see what happens.</li></ul></div>
+  <p class="note">This setup is well tuned: K<sub>p</sub>=8, K<sub>i</sub>=4, K<sub>d</sub>=4. Use <b>Load this setup</b> any time to get back to it.</p>` });
+
+L.push({ title: 'P only: the spring', preset: { kp: 4, ki: 0, kd: 0, tf: 0, start: { z: 0, sp: 5 } },
+  html: `<p>A pure P controller acts like a spring pulling the drone toward the target: thrust = K<sub>p</sub> × error.</p>
+  <p>Two problems appear right away:</p>
+  <ol><li><b>Steady-state error (droop).</b> To produce 9.81 N of hover thrust, P needs a nonzero error: <code>e = m·g / K<sub>p</sub></code>. At K<sub>p</sub>=4 the drone hangs about <b>2.45 m</b> below the target.</li>
+  <li><b>Oscillation.</b> A spring with a mass and little friction bounces. Nothing here slows the drone down except air drag.</li></ol>
+  <div class="try"><h3>Try it</h3><ul><li>Raise K<sub>p</sub> to 10. The droop shrinks to ~1 m, but the bouncing never dies out.</li><li>Go to 12 and the oscillation <em>grows</em>. Watch the pole map: two poles cross into the red half-plane.</li><li>Lower K<sub>p</sub> to 2. It barely leaves the ground.</li></ul></div>
+  <p class="note">Why does more gain make it worse? The motors need ~80 ms to spin up. That lag means the push arrives late, and a late push can feed energy into the swing instead of removing it.</p>` });
+
+L.push({ title: 'D: the damper', preset: { kp: 6, ki: 0, kd: 3, tf: 0.02, start: { z: 0, sp: 5 } },
+  html: `<p>The derivative term opposes motion. When the drone rushes toward the target, the error shrinks fast, so D brakes early. It acts like a shock absorber.</p>
+  <p>With K<sub>d</sub>=3 the bouncing is gone. The droop is still there, because D does nothing when the drone is still.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Set K<sub>d</sub>=0.5: bouncy again. Set K<sub>d</sub>=10: the drone creeps toward the target as if moving through syrup (overdamped).</li><li>Watch the pole map. More D moves the pair of poles left, then onto the real axis, where oscillation stops completely.</li><li>With D in place you can now use much more K<sub>p</sub>. Try K<sub>p</sub>=15, K<sub>d</sub>=5.</li></ul></div>
+  <p class="note">The D term amplifies anything that changes fast, including sensor noise. Lesson 8 covers this.</p>` });
+
+L.push({ title: 'I: the memory', preset: { kp: 6, ki: 3, kd: 3, tf: 0.02, start: { z: 0, sp: 5 } },
+  html: `<p>The integral term adds up error over time. As long as the drone sits below the target, I keeps growing until the droop is gone.</p>
+  <p>Look at the purple line in the Terms chart. It settles at about <b>9.8 N</b>: the integrator has <em>learned</em> the drone's weight. P and D then only handle the transients.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Push K<sub>i</sub> to 12. The drone overshoots and swings slowly. The integrator keeps pushing after the target is reached because it remembers the past.</li><li>K<sub>i</sub>=25 makes the loop unstable.</li><li>Set K<sub>i</sub>=0.5. There's no overshoot, but the last bit of error takes ages to disappear.</li></ul></div>
+  <p class="note">Every term has a cost. The integral removes steady-state error but adds phase lag (it reacts to the past), which erodes stability.</p>` });
+
+L.push({ title: 'Stability, poles and margins', preset: { kp: 10, ki: 0, kd: 0, tf: 0, start: { z: 0, sp: 5 } },
+  html: `<p>The pole map on the right shows the <b>closed-loop poles</b> of the linearized system. Each pole is one "mode" of the response:</p>
+  <ul><li>Horizontal position = decay rate. Left of the axis decays; right grows. The red half-plane is unstable.</li><li>Vertical position = oscillation frequency in rad/s.</li><li>The dashed green lines mark damping ζ=0.7. Poles inside that wedge give little overshoot.</li></ul>
+  <p><b>Phase margin</b> is how much extra delay the loop can take before oscillating. Aim for 45–60°. <b>Gain margin</b> is how far you can raise the gain before instability. Aim for at least 6 dB.</p>
+  <div class="widget" id="znBox"><h3>Ziegler–Nichols helper</h3>
+    <p style="font-size:13.5px;margin-bottom:8px">This setup is P-only near the edge. Nudge K<sub>p</sub> until the oscillation neither grows nor decays, then measure.</p>
+    <div class="zn-read"><div><div class="l">Kp now</div><div class="v" id="znKp">—</div></div><div><div class="l">Period</div><div class="v" id="znTu">—</div></div><div><div class="l">Swing</div><div class="v" id="znTr">—</div></div></div>
+    <button class="btn small" id="znMeasure" type="button">Use as K<sub>u</sub>, T<sub>u</sub></button>
+    <div id="znTable"></div></div>
+  <p class="note">Classic Ziegler–Nichols aims for a quarter-amplitude decay, which is quite aggressive. Expect overshoot, and treat it as a starting point.</p>` });
+
+L.push({ title: 'Integral windup', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, aw: 'none', start: { z: 3, sp: 3, hover: true },
+    script: [{ t: 1, fn: () => setTether(true) }, { t: 7, fn: () => setTether(false) }] },
+  html: `<p>Real actuators have limits. When the drone is held down, or the target is far away, the motors saturate at 25 N. The integrator doesn't know this and keeps accumulating error.</p>
+  <p>In this setup a ground crew tethers the drone at t=1 s and releases it at t=7 s. Watch the purple I term climb far above what the motors can ever deliver. After release the drone <b>rockets past the target</b>. It stays at full thrust until the integrator unwinds, which requires overshooting for a long time.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Switch <b>Anti-windup</b> to <em>clamping</em> and press <b>Load this setup</b> again. Clamping stops integrating while the output is saturated and the error pushes further into saturation.</li><li>Try <em>back-calculation</em>, which bleeds the integrator down toward what the motors can actually deliver.</li><li>Windup also happens without a tether. With anti-windup off, jump the target from 2 m to 8 m.</li></ul></div>
+  <p class="note">On real machines windup shows up after a stalled valve, a heater at full power, a motor against an end stop, or a drone sitting on the ground before takeoff.</p>` });
+
+L.push({ title: 'Derivative kick', preset: { kp: 8, ki: 4, kd: 4, tf: 0, dsrc: 'err', noise: 0, start: { z: 3, sp: 3, hover: true },
+    script: [{ t: 1.5, fn: () => setSetpoint(6) }, { t: 6, fn: () => setSetpoint(3) }, { t: 10.5, fn: () => setSetpoint(6) }, { t: 15, fn: () => setSetpoint(3) }] },
+  html: `<p>When the target jumps, the error jumps instantly. Its derivative for that one sample is huge: a 3 m step over a 10 ms tick gives de/dt = 300 m/s. Multiplied by K<sub>d</sub>=4, D demands <b>1200 N</b> for a single sample.</p>
+  <p>Watch the pink spikes in the Terms chart and the thrust slamming into its limits. On a real drone that's a jolt to the motors and the frame. On a valve it's a hammer blow.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Switch <b>Derivative acts on</b> to <em>measurement</em>. The drone's altitude can't jump, so the spikes disappear, and the response is otherwise almost the same.</li><li>Notice the pole map doesn't change. The loop dynamics are identical; only the response to the target changes.</li></ul></div>
+  <p class="note">This is why most industrial PIDs take the derivative of the measured value (sometimes called PI-D). Many also apply only part of the target change to P (setpoint weighting).</p>` });
+
+L.push({ title: 'Noise and the derivative filter', preset: { kp: 8, ki: 4, kd: 4, tf: 0, noise: 0.03, start: { z: 4, sp: 4, hover: true } },
+  html: `<p>Real sensors are noisy. This altimeter now has 3 cm of random noise. It looks harmless on the altitude chart, but D differentiates it: 3 cm of change in 10 ms reads as 3 m/s of speed.</p>
+  <p>Check <b>Motor jitter</b> under the charts and listen with <b>Sound</b> on. The motors are thrashing. On hardware this means heat, wear, vibration, and a drone that sounds sick.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Raise the <b>derivative filter</b> τ<sub>f</sub> to 30–50 ms. The jitter drops sharply.</li><li>Push τ<sub>f</sub> to 250 ms. The filter now lags so much that D stops damping, and the drone starts to wobble. Watch the phase margin.</li><li>Set the control rate to 200 Hz with no filter. Faster sampling makes derivative noise <em>worse</em>, because the same noise is divided by a smaller time step.</li><li>Lowering K<sub>d</sub> also helps, at the cost of damping.</li></ul></div>
+  <p class="note">A rule of thumb is to set τ<sub>f</sub> between K<sub>d</sub>/K<sub>p</sub>/20 and K<sub>d</sub>/K<sub>p</sub>/5. Noise is also why many practical loops are just PI.</p>` });
+
+L.push({ title: 'Dead time', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, delay: 0.15, start: { z: 4, sp: 4, hover: true },
+    script: [{ t: 1, fn: () => setSetpoint(6) }] },
+  html: `<p>The same well-tuned gains from lesson 1, but the altimeter now reports with <b>150 ms of delay</b>. That's typical of a filtered barometer or a vision system.</p>
+  <p>The controller is steering by an old picture of the world. By the time it sees the drone reach the target, the drone is already past it. The response rings. Compare the phase margin with lesson 1: most of it is gone.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Increase the delay to 250 ms: the loop goes unstable.</li><li>Detune to regain stability: try K<sub>p</sub>=5, K<sub>i</sub>=1.5, K<sub>d</sub>=2.5. Delay forces a slower, gentler loop. No amount of tuning makes a delayed loop fast.</li><li>Set the control rate to 10 Hz with no sensor delay. Slow sampling acts like delay too, about half a sample period.</li></ul></div>
+  <p class="note">A rough limit: you can't get a closed-loop response much faster than a few times the dead time. Reduce the delay first (a faster sensor or less filtering), then tune.</p>` });
+
+L.push({ title: 'Disturbances and feedforward', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, start: { z: 4, sp: 4, hover: true },
+    script: [{ t: 2, fn: () => gust(-22) }, { t: 5, fn: () => { cfg.mass = 1.6; syncUI(); scheduleAnalyze(); } }, { t: 11, fn: () => { cfg.wind = -5; syncUI(); } }, { t: 16, fn: () => { cfg.wind = 0; cfg.mass = 1; syncUI(); scheduleAnalyze(); } }] },
+  html: `<p>A controller's real job is often <b>disturbance rejection</b>: holding position while the world pushes on it. This run applies a downward gust at 2 s, picks up a 600 g payload at 5 s, adds a downdraft at 11 s, and removes both at 16 s.</p>
+  <p>P and D react to the gust quickly. The payload and downdraft are permanent, so only I can fully cancel them. Watch the I term step up to the new weight.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Set K<sub>i</sub>=1 and reload. Each sag takes much longer to recover.</li><li>Turn on <b>Hover feedforward</b>. The controller now adds the nominal 9.81 N directly, so the integrator only covers the difference. Takeoffs from the ground get faster and windup gets smaller, because I never has to climb all the way to 9.8 N.</li><li>Use the Gust buttons and the wind slider yourself.</li></ul></div>
+  <p class="note">Feedforward handles what you already know (weight, known loads, planned moves). Feedback cleans up everything else. The best loops use both.</p>` });
+
+L.push({ title: 'Flight test challenge', preset: { kp: 3, ki: 0.5, kd: 1, tf: 0, noise: 0.015, delay: 0.05, start: { z: 0, sp: 0 } }, challenge: true,
+  html: `<p>Time to tune under realistic conditions: 1.5 cm sensor noise, 50 ms of sensor delay, and poor starting gains. The test flight takes off to 5 m, takes a 12 N downward gust at 8 s, picks up a 500 g payload at 12 s, then descends to 2 m at 17 s. Noise and delay are fixed for the test; everything in the Gains and Controller panels is yours to change.</p>
+  <div class="widget"><h3>Test flight</h3>
+    <button class="btn small primary" id="chRun" type="button">Run test flight</button>
+    <div class="score" id="chScore"></div></div>
+  <div class="try"><h3>Suggested workflow</h3><ul><li>Adjust gains, filter, and anti-windup, then run again. Each run restarts from the ground with your current settings.</li><li>The lesson 1 tuning passes four of six. Its motors chatter too much and it sags too far under the payload.</li><li>Filter the derivative first, then you can afford more K<sub>p</sub> and K<sub>d</sub>.</li><li>Stuck? Lesson 12 has a step-by-step recipe, or <button class="btn small" id="chReveal" type="button">show one passing tuning</button></li></ul></div>` });
+
+L.push({ title: 'A practical tuning recipe', preset: { start: { z: 0, sp: 4 } },
+  html: `<p>This is a workflow that works on most real loops: drones, motors, heaters, and flow valves.</p>
+  <ol>
+   <li><b>Know the plant.</b> Find the actuator limits, sensor noise, and dead time before touching gains. Fix the hardware first if the delay is large.</li>
+   <li><b>Add feedforward</b> for anything you can predict, such as weight or known loads.</li>
+   <li><b>Start with P only</b>, low. Raise it until the response is brisk and starts to ring.</li>
+   <li><b>Add D</b> (on measurement, filtered) until the ringing is damped. Then you can often raise P a bit more.</li>
+   <li><b>Add I last</b>, small, until the steady-state error clears in acceptable time. Back off if overshoot grows.</li>
+   <li><b>Turn on anti-windup</b>. Always.</li>
+   <li><b>Leave margin.</b> Aim for 45–60° phase margin and 6+ dB gain margin. Mass, delay, and battery voltage will drift in the field.</li>
+   <li><b>Test the ugly cases</b>: big steps, saturation, gusts, load changes, and a noisy sensor. Tuning that only looks good on a small clean step is not finished.</li>
+  </ol>
+  <p class="note">Symptom guide: slow sway around the target → too much I. Fast buzz → too much D or not enough filtering. Bounce that won't settle → too much P or not enough D. Hangs below the target → not enough I. Huge overshoot after saturation → windup.</p>` });
+
+let cur = 0;
+let lessonTick = null;
+function renderNav() {
+  const nav = $('lessonNav'); nav.innerHTML = '';
+  L.forEach((l, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = i + 1; b.title = l.title;
+    b.setAttribute('aria-label', 'Lesson ' + (i + 1) + ': ' + l.title);
+    if (i === cur) b.setAttribute('aria-current', 'true');
+    b.onclick = () => openLesson(i, true);
+    nav.appendChild(b);
+  });
+}
+function applyPreset(p, keepControllerOpts = false) {
+  const keep = keepControllerOpts ? { aw: cfg.aw, dsrc: cfg.dsrc, tf: cfg.tf, ff: cfg.ff } : {};
+  Object.assign(cfg, DEFAULTS);
+  for (const k of Object.keys(DEFAULTS)) if (p[k] !== undefined) cfg[k] = p[k];
+  Object.assign(cfg, keep);
+  syncUI();
+  resetSim({ ...(p.start || {}), script: p.script });
+  analyze();
+}
+let lastLoaded = -1;
+function openLesson(i, load) {
+  cur = i; renderNav();
+  const l = L[i];
+  $('lessonBody').innerHTML = `<div class="eyebrow">Lesson ${i + 1} of ${L.length}</div><h2>${l.title}</h2>${l.html}`;
+  $('lessonBody').scrollTop = 0;
+  $('prevLesson').disabled = i === 0; $('nextLesson').disabled = i === L.length - 1;
+  lessonTick = null;
+  if (load) { applyPreset(l.preset); lastLoaded = i; }
+  if ($('znBox')) initZN();
+  if (l.challenge) initChallenge();
+  try { localStorage.setItem('pidlab-lesson', String(i)); } catch (e) {}
+}
+$('prevLesson').onclick = () => openLesson(Math.max(0, cur - 1), true);
+$('nextLesson').onclick = () => openLesson(Math.min(L.length - 1, cur + 1), true);
+$('loadLesson').onclick = () => {
+  // reloading the same lesson keeps controller options so users can compare fixes (e.g. anti-windup)
+  const same = lastLoaded === cur;
+  const p = L[cur].preset;
+  if (same) {
+    const keep = { aw: cfg.aw, dsrc: cfg.dsrc, tf: cfg.tf, ff: cfg.ff, kp: cfg.kp, ki: cfg.ki, kd: cfg.kd, noise: cfg.noise, delay: cfg.delay, rate: cfg.rate };
+    Object.assign(cfg, DEFAULTS, keep);
+    syncUI();
+    resetSim({ ...(p.start || {}), script: p.script });
+    analyze();
+  } else { applyPreset(p); lastLoaded = cur; }
+};
+
+// ZN widget
+function initZN() {
+  let meas = null;
+  lessonTick = () => {
+    if (!$('znKp')) return;
+    const a = zn.analyze();
+    $('znKp').textContent = cfg.kp.toFixed(1);
+    $('znTu').textContent = a && a.Tu ? a.Tu.toFixed(2) + ' s' : '—';
+    $('znTr').textContent = a ? (a.trend === 'none' ? 'none' : a.trend) : 'wait…';
+  };
+  $('znMeasure').onclick = () => {
+    const a = zn.analyze();
+    if (!a || !a.Tu) { $('znTable').innerHTML = '<p class="fine">No steady oscillation yet. Set K<sub>i</sub>=K<sub>d</sub>=0, raise K<sub>p</sub> until the swing is sustained, and wait a few cycles.</p>'; return; }
+    const Ku = cfg.kp, Tu = a.Tu;
+    const rows = [
+      ['Classic PID', 0.6 * Ku, 1.2 * Ku / Tu, 0.075 * Ku * Tu],
+      ['Some overshoot', Ku / 3, 0.666 * Ku / Tu, 0.111 * Ku * Tu],
+      ['No overshoot', 0.2 * Ku, 0.4 * Ku / Tu, 0.0667 * Ku * Tu],
+      ['PI only', 0.45 * Ku, 0.54 * Ku / Tu, 0],
+    ];
+    meas = rows;
+    $('znTable').innerHTML = `<p class="fine" style="margin-top:6px">K<sub>u</sub> = ${Ku.toFixed(1)}, T<sub>u</sub> = ${Tu.toFixed(2)} s${a.trend !== 'sustained' ? ' (the swing is ' + a.trend + ', so this is only a rough estimate)' : ''}</p>
+      <table><thead><tr><th>Rule</th><th>Kp</th><th>Ki</th><th>Kd</th><th></th></tr></thead><tbody>
+      ${rows.map((r, k) => `<tr><td>${r[0]}</td><td>${r[1].toFixed(1)}</td><td>${r[2].toFixed(1)}</td><td>${r[3].toFixed(2)}</td><td><button class="btn small" type="button" data-zn="${k}">Fly</button></td></tr>`).join('')}
+      </tbody></table>`;
+    $('znTable').querySelectorAll('[data-zn]').forEach(b => b.onclick = () => {
+      const r = meas[+b.dataset.zn];
+      cfg.kp = +r[1].toFixed(1); cfg.ki = +r[2].toFixed(1); cfg.kd = +r[3].toFixed(2); cfg.tf = 0.02;
+      syncUI(); resetSim({ z: 0, sp: 5 }); analyze();
+    });
+  };
+}
+
+// Challenge
+function initChallenge() {
+  let run = null;
+  const crit = [
+    ['Takeoff overshoot ≤ 10%', r => r.os, v => v.toFixed(1) + '%', v => v <= 10],
+    ['Settles within 4 s (±2%)', r => r.settle, v => isFinite(v) ? v.toFixed(2) + ' s' : 'never', v => v <= 4],
+    ['Gust dip ≤ 0.9 m', r => r.gust, v => v.toFixed(2) + ' m', v => v <= 0.9],
+    ['Payload sag ≤ 0.5 m', r => r.payload, v => v.toFixed(2) + ' m', v => v <= 0.5],
+    ['Hover motor jitter ≤ 1.5 N', r => r.jit, v => v.toFixed(2) + ' N', v => v <= 1.5],
+    ['Final error ≤ 3 cm', r => r.fin, v => (v * 100).toFixed(1) + ' cm', v => v <= 0.03],
+  ];
+  function render(done) {
+    const el = $('chScore'); if (!el) return;
+    if (!run) { el.innerHTML = '<div><span style="color:var(--ink-3)">Press Run to fly the test sequence (25 s).</span></div>'; return; }
+    const res = run.res;
+    let passed = 0;
+    el.innerHTML = crit.map(([name, get, fmt, ok]) => {
+      const v = get(res);
+      const avail = v !== null && v !== undefined && (done || name.startsWith('Takeoff') && run.phase > 0 || name.startsWith('Settles') && run.phase > 0 || name.startsWith('Gust') && run.phase > 1 || name.startsWith('Payload') && run.phase > 2);
+      if (avail && ok(v)) passed++;
+      const chip = !avail ? '<span class="chip wait">…</span>' : ok(v) ? '<span class="chip pass">PASS</span>' : '<span class="chip fail">FAIL</span>';
+      return `<div><span>${name}</span><span class="mono">${avail ? fmt(v) : ''} ${chip}</span></div>`;
+    }).join('') + (done ? `<div style="margin-top:4px"><b>${passed} / ${crit.length} passed.</b>&nbsp;<span style="color:var(--ink-2)">${passed === crit.length ? 'Flight test signed off.' : 'Adjust and fly again.'}</span></div>` : '');
+  }
+  render(false);
+  $('chReveal').onclick = () => { Object.assign(cfg, { kp: 12, ki: 6, kd: 5, tf: 0.06, dsrc: 'meas', aw: 'clamp', ff: false, rate: 100 }); syncUI(); analyze(); };
+  $('chRun').onclick = () => {
+    Object.assign(cfg, { mass: 1, wind: 0, noise: 0.015, delay: 0.05 }); syncUI();
+    resetSim({ z: 0, sp: 0 }); analyze();
+    run = { phase: 0, res: { os: 0, settle: Infinity, gust: 0, payload: 0, jit: 0, fin: null }, jitSum: 0, jitN: 0 };
+    sim.script = [
+      { t: 0.5, fn: () => setSetpoint(5) },
+      { t: 8, fn: () => { run.phase = 1; step = null; gust(-12); } },
+      { t: 12, fn: () => { run.phase = 2; cfg.mass = 1.5; syncUI(); scheduleAnalyze(); } },
+      { t: 17, fn: () => { run.phase = 3; setSetpoint(2); } },
+      { t: 25, fn: () => { run.phase = 4; run.res.fin = Math.abs(sim.sp - sim.z); render(true); run.done = true; } },
+    ];
+    render(false);
+  };
+  lessonTick = () => {
+    if (!run || run.done) return;
+    const r = run.res;
+    if (run.phase === 0 && step && sim.t > 0.5) {
+      r.os = Math.max(0, step.maxProg - 1) * 100;
+      r.settle = sim.t - step.lastOut > 0.3 ? step.lastOut - step.t0 : Infinity;
+    }
+    if (run.phase === 1) r.gust = Math.max(r.gust, 5 - sim.z);
+    if (run.phase === 2) r.payload = Math.max(r.payload, 5 - sim.z);
+    // jitter is judged only while hovering steadily (5–8 s and 22–25 s)
+    if ((sim.t > 5 && sim.t < 8) || sim.t > 22) { run.jitSum += Math.sqrt(Math.max(0, sim.jitVar)); run.jitN++; r.jit = run.jitSum / run.jitN; }
+    render(false);
+  };
+}
+
+// ---------- boot ----------
+let startLesson = 0;
+try { const s = parseInt(localStorage.getItem('pidlab-lesson'), 10); if (s >= 0 && s < L.length) startLesson = s; } catch (e) {}
+syncUI();
+resetSim({ z: 0, sp: 4 });
+openLesson(startLesson, true);
+new ResizeObserver(() => drawPoles()).observe($('poles'));
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
