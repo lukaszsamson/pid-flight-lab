@@ -35,3 +35,7 @@ Open `site/index.html` in a browser. There is no build step.
 ## Deployment
 
 Netlify deploys `site/` on every push to `main` (see `netlify.toml`).
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
