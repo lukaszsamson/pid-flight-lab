@@ -5,312 +5,489 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PID Flight Lab</title>
 <meta name="description" content="Interactive lessons on PID tuning with a simulated quadcopter altitude hold.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2315173A'/%3E%3Cstop offset='1' stop-color='%23C8625A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M6 15h8M18 15h8' stroke='%23EEF1FA' stroke-width='2.4' stroke-linecap='round'/%3E%3Crect x='12' y='12.5' width='8' height='5' rx='2' fill='%23EEF1FA'/%3E%3Cpath d='M4 25c5-6 9 3 14-2s7-3 10-1' stroke='%238FD3FF' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232553C9'/%3E%3Cpath d='M5 16h7M20 16h7' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='11' y='13' width='10' height='6' rx='2' fill='white'/%3E%3Cpath d='M16 24v4' stroke='white' stroke-width='2' stroke-dasharray='1 2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Martian+Mono:wdth,wght@75..112.5,400..500&display=swap">
 <style>
-:root{color-scheme:light}
-body{margin:0}
-img{max-width:100%}
-[hidden]{display:none!important}
-</style>
-<style>
+/* ============ tokens: dawn (light) ============ */
 :root{
-  --bg:#EDF0F3; --panel:#FFFFFF; --panel-2:#F4F6F8; --ink:#16202A; --ink-2:#465361; --ink-3:#7A8693;
-  --line:#D6DCE2; --line-2:#E5E9ED;
-  --accent:#2553C9; --accent-soft:rgba(37,83,201,.12);
-  --thrust:#C4700C; --p:#0B877A; --i:#7446C2; --d:#C23760;
-  --good:#1D8547; --warn:#A86F12; --bad:#C3362B;
-  --sky-top:#C9DCEF; --sky-bot:#EEF3F8; --ground:#B7BFA3; --ground-2:#9CA684; --pad:#6E7560;
-  --drone:#1E2833; --rotor:rgba(30,40,51,.28);
-  --grid:rgba(22,32,42,.07); --grid-2:rgba(22,32,42,.16);
-  --sat:rgba(195,54,43,.08);
-  --shadow:0 1px 2px rgba(22,32,42,.06),0 4px 16px rgba(22,32,42,.05);
-  --f-display:"Saira Condensed","Arial Narrow",system-ui,sans-serif;
-  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+  --bg:#ECEFF6; --bg-glow-1:rgba(255,138,91,.20); --bg-glow-2:rgba(64,110,255,.14);
+  --surface:#FFFFFF; --surface-2:#F4F6FB; --glass:rgba(255,255,255,.70); --glass-strong:rgba(255,255,255,.88);
+  --line:rgba(24,34,80,.12); --line-2:rgba(24,34,80,.06);
+  --ink:#0E1330; --ink-2:#4A5478; --ink-3:#7E87A6;
+  --accent:#1D6FE0; --sunset:#EE5F36; --sunset-2:#F5A034; --thrust:#D58000;
+  --p:#049C7E; --i:#7550E8; --d:#E03C69;
+  --good:#12975A; --warn:#BF8300; --bad:#D92C45;
+  --glow-a:0.35;
+  --sky-0:#86B4E6; --sky-1:#BCD6F1; --sky-2:#EED8CF; --sky-3:#FBDDBE; --sun:#FFC58A; --star:0;
+  --ridge-1:#B2C0DA; --ridge-2:#8FA2C4; --ridge-3:#667CA3; --ground-0:#4B5A72; --ground-1:#2F3A4F; --horizon:#FFD7A8;
+  --light:#FFB85C; --drone-body:#1A2140; --drone-hi:#6E84C6; --rotor:#1A2140; --plume:#1D6FE0;
+  --shadow:0 1px 1px rgba(14,19,48,.04),0 10px 30px -12px rgba(14,19,48,.18);
+  --f-display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Martian Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
 }
+/* ============ tokens: dusk (dark) ============ */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --bg:#0D1217; --panel:#141B22; --panel-2:#19222B; --ink:#E3E9EF; --ink-2:#A3AFBB; --ink-3:#6C7985;
-    --line:#26313C; --line-2:#1F2831;
-    --accent:#7098FF; --accent-soft:rgba(112,152,255,.16);
-    --thrust:#F0A443; --p:#39C7B3; --i:#AE8AF4; --d:#F07197;
-    --good:#4CC47E; --warn:#E2AE4A; --bad:#F2665A;
-    --sky-top:#08111C; --sky-bot:#172536; --ground:#28301F; --ground-2:#1E2517; --pad:#4B5540;
-    --drone:#D8E0E8; --rotor:rgba(216,224,232,.25);
-    --grid:rgba(227,233,239,.05); --grid-2:rgba(227,233,239,.13);
-    --sat:rgba(242,102,90,.10);
-    --shadow:0 1px 2px rgba(0,0,0,.3);
+    --bg:#060914; --bg-glow-1:rgba(255,120,80,.10); --bg-glow-2:rgba(90,110,255,.12);
+    --surface:#0C1124; --surface-2:#121A33; --glass:rgba(10,15,34,.60); --glass-strong:rgba(12,18,40,.88);
+    --line:rgba(160,178,255,.15); --line-2:rgba(160,178,255,.07);
+    --ink:#EEF1FA; --ink-2:#A3ADCB; --ink-3:#6A74A0;
+    --accent:#8FD3FF; --sunset:#FF8A5B; --sunset-2:#FFBE55; --thrust:#FFBE55;
+    --p:#43E0BE; --i:#B69CFF; --d:#FF6F91;
+    --good:#5BE49B; --warn:#FFD166; --bad:#FF5D73;
+    --glow-a:1;
+    --sky-0:#04060F; --sky-1:#14163A; --sky-2:#4B2A57; --sky-3:#C9635A; --sun:#FF8A55; --star:1;
+    --ridge-1:#2A2145; --ridge-2:#181733; --ridge-3:#0E0F22; --ground-0:#0B0D1C; --ground-1:#06070F; --horizon:#FF9A6A;
+    --light:#FFB85C; --drone-body:#161B36; --drone-hi:#9DB0F0; --rotor:#C9D3F5; --plume:#8FD3FF;
+    --shadow:0 1px 1px rgba(0,0,0,.3),0 20px 40px -20px rgba(0,0,0,.6);
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#0D1217; --panel:#141B22; --panel-2:#19222B; --ink:#E3E9EF; --ink-2:#A3AFBB; --ink-3:#6C7985;
-  --line:#26313C; --line-2:#1F2831;
-  --accent:#7098FF; --accent-soft:rgba(112,152,255,.16);
-  --thrust:#F0A443; --p:#39C7B3; --i:#AE8AF4; --d:#F07197;
-  --good:#4CC47E; --warn:#E2AE4A; --bad:#F2665A;
-  --sky-top:#08111C; --sky-bot:#172536; --ground:#28301F; --ground-2:#1E2517; --pad:#4B5540;
-  --drone:#D8E0E8; --rotor:rgba(216,224,232,.25);
-  --grid:rgba(227,233,239,.05); --grid-2:rgba(227,233,239,.13);
-  --sat:rgba(242,102,90,.10);
-  --shadow:0 1px 2px rgba(0,0,0,.3);
+  --bg:#060914; --bg-glow-1:rgba(255,120,80,.10); --bg-glow-2:rgba(90,110,255,.12);
+  --surface:#0C1124; --surface-2:#121A33; --glass:rgba(10,15,34,.60); --glass-strong:rgba(12,18,40,.88);
+  --line:rgba(160,178,255,.15); --line-2:rgba(160,178,255,.07);
+  --ink:#EEF1FA; --ink-2:#A3ADCB; --ink-3:#6A74A0;
+  --accent:#8FD3FF; --sunset:#FF8A5B; --sunset-2:#FFBE55; --thrust:#FFBE55;
+  --p:#43E0BE; --i:#B69CFF; --d:#FF6F91;
+  --good:#5BE49B; --warn:#FFD166; --bad:#FF5D73;
+  --glow-a:1;
+  --sky-0:#04060F; --sky-1:#14163A; --sky-2:#4B2A57; --sky-3:#C9635A; --sun:#FF8A55; --star:1;
+  --ridge-1:#2A2145; --ridge-2:#181733; --ridge-3:#0E0F22; --ground-0:#0B0D1C; --ground-1:#06070F; --horizon:#FF9A6A;
+  --light:#FFB85C; --drone-body:#161B36; --drone-hi:#9DB0F0; --rotor:#C9D3F5; --plume:#8FD3FF;
+  --shadow:0 1px 1px rgba(0,0,0,.3),0 20px 40px -20px rgba(0,0,0,.6);
 }
+
+/* ============ base ============ */
 *{box-sizing:border-box}
-html,body{background:var(--bg)}
-body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 32px}
-h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+html{background:var(--bg)}
+body{
+  margin:0; color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.55;
+  padding-inline:20px; padding-block:0 40px;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, var(--bg-glow-1), transparent 60%),
+    radial-gradient(900px 700px at -10% 30%, var(--bg-glow-2), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%}
+[hidden]{display:none!important}
+h1,h2,h3{margin:0;text-wrap:balance}
 button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--f-mono);font-stretch:87.5%;font-variant-numeric:tabular-nums}
+.wrap{max-width:1640px;margin-inline:auto}
 
-/* header */
-.top{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding-block:18px 14px;max-width:1560px;margin-inline:auto}
-.top h1{font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.top h1 span{color:var(--accent)}
-.top p{margin:0;color:var(--ink-2);max-width:70ch}
-.formula{margin-left:auto;font-family:var(--f-mono);font-size:13px;color:var(--ink-2);white-space:nowrap}
-.formula b{font-weight:500}
-.formula .kp{color:var(--p)}.formula .ki{color:var(--i)}.formula .kd{color:var(--d)}
+/* ============ header ============ */
+.top{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding-block:22px 18px}
+.logo{font-family:var(--f-display);font-weight:900;font-size:44px;line-height:.9;letter-spacing:.02em;text-transform:uppercase;display:flex;gap:.18em;perspective:600px}
+.logo .w{display:inline-flex}
+.logo .ch{display:inline-block}
+.logo .grad .ch{background:linear-gradient(180deg,var(--sunset-2),var(--sunset));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{color:var(--ink-2);max-width:52ch;font-size:14.5px;line-height:1.45}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.formula{font-family:var(--f-mono);font-stretch:87.5%;font-size:12px;color:var(--ink-2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.formula .term{padding:4px 8px;border-radius:99px;border:1px solid var(--line);background:var(--glass)}
+.formula .term.p{color:var(--p)}.formula .term.i{color:var(--i)}.formula .term.d{color:var(--d)}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--glass);display:grid;place-items:center;cursor:pointer;transition:transform .3s var(--ease),border-color .2s}
+.icon-btn:hover{transform:rotate(-12deg);border-color:var(--ink-3)}
+.icon-btn svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round}
 
-.layout{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr);gap:16px;max-width:1560px;margin-inline:auto;align-items:start}
+/* ============ layout ============ */
+.deck{display:grid;grid-template-columns:minmax(320px,390px) minmax(0,1fr);gap:18px;align-items:stretch}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);min-width:0}
 
-/* lessons */
-.lessons{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
-.lesson-nav{display:flex;flex-wrap:wrap;gap:4px;padding:12px;border-bottom:1px solid var(--line)}
-.lesson-nav button{width:32px;height:30px;border:1px solid var(--line);background:var(--panel-2);border-radius:6px;cursor:pointer;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
-.lesson-nav button:hover{border-color:var(--accent);color:var(--ink)}
-.lesson-nav button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
-.lesson-body{padding:16px 18px 8px;overflow-y:auto;flex:1}
-.lesson-body .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
-.lesson-body h2{font-size:26px;font-weight:700;line-height:1.1;margin:4px 0 10px}
-.lesson-body p{margin:0 0 10px}
-.lesson-body ul,.lesson-body ol{margin:0 0 10px;padding-left:20px}
-.lesson-body li{margin-bottom:4px}
-.lesson-body code{font-family:var(--f-mono);font-size:12.5px;background:var(--panel-2);border:1px solid var(--line-2);padding:0 4px;border-radius:4px}
-.lesson-body .try{background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin:12px 0}
-.lesson-body .try h3{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:4px}
+/* ============ mission / lessons ============ */
+.mission{display:flex;flex-direction:column;height:clamp(560px,74vh,780px);overflow:hidden}
+.plan-wrap{padding:18px 18px 14px;border-bottom:1px solid var(--line-2)}
+.plan-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.kicker{font-family:var(--f-mono);font-stretch:87.5%;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.plan{list-style:none;margin:0;padding:0;display:flex;justify-content:space-between;position:relative;--prog:0}
+.plan::before,.plan::after{content:"";position:absolute;left:9px;right:9px;top:50%;height:2px;margin-top:-1px;border-radius:2px}
+.plan::before{background:var(--line)}
+.plan::after{background:linear-gradient(90deg,var(--accent),var(--sunset));transform-origin:left;transform:scaleX(var(--prog));transition:transform .7s var(--ease)}
+.plan li{position:relative;z-index:1}
+.node{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--surface);cursor:pointer;padding:0;display:grid;place-items:center;font-family:var(--f-mono);font-stretch:75%;font-size:8.5px;color:var(--ink-3);transition:transform .3s var(--ease),background .3s,border-color .3s,box-shadow .3s}
+.node:hover{transform:scale(1.25)}
+.node.done{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.node[aria-current="true"]{background:var(--sunset);border-color:var(--sunset);color:#fff;transform:scale(1.35);box-shadow:0 0 0 5px color-mix(in srgb,var(--sunset) 22%,transparent),0 0 18px color-mix(in srgb,var(--sunset) 60%,transparent)}
+.node::after{content:attr(data-title);position:absolute;top:28px;left:50%;transform:translate(-50%,-4px);white-space:nowrap;font-family:var(--f-body);font-size:12px;font-stretch:100%;background:var(--glass-strong);color:var(--ink);border:1px solid var(--line);padding:3px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:5}
+.plan li:first-child .node::after{left:0;transform:translate(0,-4px)}
+.plan li:last-child .node::after{left:auto;right:0;transform:translate(0,-4px)}
+.node:hover::after,.node:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.plan li:first-child .node:hover::after,.plan li:first-child .node:focus-visible::after,.plan li:last-child .node:hover::after,.plan li:last-child .node:focus-visible::after{transform:none}
+
+.lesson-body{padding:18px 22px 10px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.lesson-body .eyebrow{font-family:var(--f-mono);font-stretch:87.5%;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--sunset)}
+.lesson-body h2{font-family:var(--f-display);font-weight:800;font-size:44px;line-height:.92;letter-spacing:.005em;text-transform:uppercase;margin:6px 0 14px}
+.lesson-body p{margin:0 0 12px}
+.lesson-body ul,.lesson-body ol{margin:0 0 12px;padding-left:20px}
+.lesson-body li{margin-bottom:5px}
+.lesson-body li::marker{color:var(--ink-3)}
+.lesson-body code{font-family:var(--f-mono);font-stretch:87.5%;font-size:11.5px;background:var(--surface-2);border:1px solid var(--line-2);padding:1px 5px;border-radius:5px}
+.lesson-body .try{border:1px solid transparent;border-radius:14px;padding:12px 14px;margin:14px 0;
+  background:linear-gradient(var(--surface-2),var(--surface-2)) padding-box,linear-gradient(135deg,var(--accent),var(--sunset)) border-box}
+.lesson-body .try h3{font-family:var(--f-mono);font-stretch:87.5%;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--accent);margin-bottom:6px}
 .lesson-body .try ul{margin:0}
-.lesson-body .note{font-size:13.5px;color:var(--ink-2);border-left:2px solid var(--line);padding-left:10px}
-.lesson-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap}
-.btn{border:1px solid var(--line);background:var(--panel-2);border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14px;line-height:1.2}
-.btn:hover{border-color:var(--ink-3)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover{filter:brightness(1.08)}
-.btn.small{padding:4px 9px;font-size:13px}
-.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lesson-body .note{font-size:13.5px;color:var(--ink-2);padding-left:12px;border-left:1px dashed var(--line)}
+.swap > *{animation:rise .55s var(--ease) both;animation-delay:calc(var(--k,0) * 45ms)}
+.lesson-actions{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line-2);align-items:center}
 .spacer{flex:1}
 
-/* main */
-.main{display:flex;flex-direction:column;gap:16px;min-width:0}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);min-width:0}
-.card-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
-.card-h h3{font-size:15px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);font-weight:600}
-.card-b{padding:10px 14px 14px}
-.sim-row{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:16px}
-.scene-card{display:flex;flex-direction:column;overflow:hidden}
-.scene-wrap{position:relative;height:470px;touch-action:none;cursor:crosshair}
-#scene{width:100%;height:100%;display:block}
-.scene-tools{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-top:1px solid var(--line);align-items:center}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{border:0;background:var(--panel-2);padding:4px 9px;font-size:13px;cursor:pointer;border-right:1px solid var(--line)}
-.seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
-.hint{font-size:12.5px;color:var(--ink-3);padding:0 10px 10px}
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:11px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:14px;line-height:1.1;transition:transform .2s var(--ease),border-color .2s,background .2s,box-shadow .25s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink-3);transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn.primary{border:0;color:#fff;background:linear-gradient(135deg,var(--sunset),var(--sunset-2));box-shadow:0 6px 20px -6px color-mix(in srgb,var(--sunset) 70%,transparent)}
+.btn.primary:hover{box-shadow:0 10px 26px -6px color-mix(in srgb,var(--sunset) 85%,transparent)}
+.btn.small{padding:6px 10px;font-size:13px;border-radius:9px}
+.btn.ghost{background:transparent}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
-.charts{display:flex;flex-direction:column}
-.chart{position:relative;border-bottom:1px solid var(--line-2)}
-.chart:last-child{border-bottom:0}
-.chart canvas{display:block;width:100%;height:150px}
-.chart-label{position:absolute;left:44px;top:6px;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;pointer-events:none;align-items:center}
-.chart-label .t{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:13px;color:var(--ink-2)}
-.key{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-family:var(--f-mono);font-size:11.5px}
-.key i{width:14px;height:3px;border-radius:2px;display:inline-block}
-.key i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)!important;height:2px}
+/* ============ stage ============ */
+.stage{position:relative;height:clamp(560px,74vh,780px);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--sky-1);isolation:isolate}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 0 transparent;transition:box-shadow .6s}
+.stage.alarm::after{animation:alarm 1.6s ease-in-out infinite}
+@keyframes alarm{0%,100%{box-shadow:inset 0 0 40px 0 color-mix(in srgb,var(--bad) 25%,transparent)}50%{box-shadow:inset 0 0 120px 10px color-mix(in srgb,var(--bad) 45%,transparent)}}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.hud{position:absolute;left:58px;top:18px;pointer-events:none;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+.hud .alt{font-family:var(--f-display);font-weight:800;font-size:64px;line-height:.85;letter-spacing:.01em;font-variant-numeric:tabular-nums;text-shadow:0 2px 20px color-mix(in srgb,var(--bg) 60%,transparent)}
+.hud .alt small{font-size:26px;font-weight:600;color:var(--ink-2);margin-left:4px}
+.hud .row{display:flex;gap:14px;font-family:var(--f-mono);font-stretch:87.5%;font-size:11px;color:var(--ink-2);align-items:center}
+.hud .row b{color:var(--ink);font-weight:500}
+.thrbar{width:110px;height:6px;border-radius:6px;background:color-mix(in srgb,var(--ink) 14%,transparent);overflow:hidden;position:relative}
+.thrbar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:6px;background:linear-gradient(90deg,var(--thrust),var(--sunset));transition:width .12s linear}
+.thrbar s{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink-2);text-decoration:none}
+.tags{display:flex;gap:6px;flex-wrap:wrap;min-height:22px}
+.tag{font-family:var(--f-mono);font-stretch:87.5%;font-size:10px;letter-spacing:.12em;padding:3px 8px;border-radius:99px;border:1px solid currentColor;background:var(--glass);animation:pop .3s var(--ease)}
+.tag.bad{color:var(--bad)}.tag.warn{color:var(--thrust)}.tag.info{color:var(--ink-2)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 
-.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--line)}
-.metric{padding:8px 12px;border-right:1px solid var(--line-2)}
+.tools{position:absolute;left:16px;bottom:16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px;border-radius:14px;max-width:calc(100% - 32px)}
+.stage.overlay .tools{max-width:calc(100% - var(--tele-w) - 48px)}
+.tools .btn{background:transparent;border-color:transparent;padding:6px 10px}
+.tools .btn:hover{background:var(--surface-2);border-color:var(--line)}
+.tools .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tools .sep{width:1px;height:20px;background:var(--line)}
+
+/* segmented control with sliding indicator */
+.seg{position:relative;display:inline-flex;padding:3px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line-2)}
+.seg .ind{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:8px;background:var(--ink);transition:transform .38s var(--ease),width .38s var(--ease);box-shadow:0 2px 10px -2px color-mix(in srgb,var(--ink) 40%,transparent)}
+.seg button{position:relative;z-index:1;border:0;background:transparent;padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:8px;color:var(--ink-2);transition:color .3s}
+.seg button[aria-pressed="true"]{color:var(--bg)}
+.tools .seg{background:transparent;border-color:transparent}
+
+/* telemetry */
+.telemetry{display:flex;flex-direction:column;overflow:hidden}
+.stage.overlay .telemetry{position:absolute;top:16px;right:16px;bottom:16px;width:var(--tele-w)}
+.chart{position:relative;flex:1;min-height:110px;border-bottom:1px solid var(--line-2);display:flex;flex-direction:column}
+.chart-h{display:flex;align-items:baseline;gap:10px;padding:10px 14px 0;flex-wrap:wrap}
+.chart-h .t{font-family:var(--f-display);font-weight:800;font-size:17px;text-transform:uppercase;letter-spacing:.06em}
+.key{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-family:var(--f-mono);font-stretch:87.5%;font-size:10.5px}
+.key i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.key i.dash{height:0;border-top:2px dashed}
+.key b{color:var(--ink);font-weight:500;min-width:4.5ch;display:inline-block}
+.chart-c{position:relative;flex:1}
+.chart-c canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.metric{padding:10px 10px 12px 12px;border-right:1px solid var(--line-2);min-width:0}
 .metric:last-child{border-right:0}
-.metric .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
-.metric .v{font-family:var(--f-mono);font-size:17px;font-variant-numeric:tabular-nums}
+.metric .l{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap}
+.metric .v{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums;transition:color .4s}
 .metric .v.bad{color:var(--bad)}.metric .v.warn{color:var(--warn)}.metric .v.good{color:var(--good)}
 
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
-.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin-bottom:10px}
-.ctl label{font-size:14px;font-weight:600;display:flex;gap:6px;align-items:baseline}
+/* ============ console ============ */
+.console{display:grid;grid-template-columns:1.25fr 1fr 1fr 1.15fr;gap:18px;margin-top:18px}
+.card{padding:18px}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card-h h3{font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.card-h .kicker{margin-left:auto}
+
+.knobs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.knob{display:flex;flex-direction:column;align-items:center;gap:2px;outline:none;--c:var(--p)}
+.knob.ki{--c:var(--i)}.knob.kd{--c:var(--d)}
+.knob .dial{position:relative;width:100%;max-width:132px;aspect-ratio:1;cursor:ns-resize;touch-action:none;border-radius:50%}
+.knob:focus-visible .dial{outline:2px solid var(--c);outline-offset:2px}
+.knob svg{width:100%;height:100%;display:block;overflow:visible}
+.knob .track{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:round}
+.knob .arc{fill:none;stroke:var(--c);stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .6s var(--ease);filter:drop-shadow(0 0 calc(6px * var(--glow-a)) var(--c))}
+.knob .act{fill:none;stroke:var(--c);stroke-width:3;stroke-linecap:round;opacity:.45;transition:stroke-dasharray .12s linear}
+.knob .tick{stroke:var(--ink-3);stroke-width:1.2;opacity:.6}
+.knob .cap{fill:var(--surface);stroke:var(--line)}
+.knob .dot{fill:var(--c);transition:transform .6s var(--ease)}
+.knob.dragging .arc,.knob.dragging .dot{transition:none}
+.knob .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.knob .val input{pointer-events:auto;width:5.2ch;text-align:center;border:0;background:transparent;font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;padding:0;color:var(--ink);font-variant-numeric:tabular-nums;border-radius:6px;cursor:text}
+.knob .val input:focus{outline:1px solid var(--c);background:var(--surface-2)}
+.knob .val span{font-family:var(--f-mono);font-stretch:87.5%;font-size:9px;color:var(--ink-3);letter-spacing:.08em}
+.knob .name{font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--c);letter-spacing:.04em}
+.knob .name sub{font-size:.7em}
+.knob .sub{font-size:11.5px;color:var(--ink-3);margin-top:-4px}
+.hint{font-size:12px;color:var(--ink-3);margin:12px 0 0}
+
+.ctl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;margin-bottom:14px}
+.ctl label{font-size:13.5px;font-weight:600;display:flex;gap:6px;align-items:baseline}
 .ctl label small{font-weight:400;color:var(--ink-3);font-size:12px}
-.ctl output{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);min-width:6ch;text-align:right}
-.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:2px 0}
-.ctl.kp input{accent-color:var(--p)}.ctl.ki input{accent-color:var(--i)}.ctl.kd input{accent-color:var(--d)}
-.ctl.kp label span{color:var(--p)}.ctl.ki label span{color:var(--i)}.ctl.kd label span{color:var(--d)}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.row .lab{font-size:14px;font-weight:600;flex:1 1 100%}
-.check{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px}
-.check input{accent-color:var(--accent);width:16px;height:16px}
-.check small{font-weight:400;color:var(--ink-3)}
+.ctl output{font-family:var(--f-mono);font-stretch:87.5%;font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink);text-align:right}
+.ctl input[type=range]{grid-column:1/-1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;--fill:50%;--c:var(--accent)}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:5px;background:linear-gradient(90deg,var(--c) 0 var(--fill),var(--line) var(--fill) 100%)}
+input[type=range]::-moz-range-track{height:5px;border-radius:5px;background:linear-gradient(90deg,var(--c) 0 var(--fill),var(--line) var(--fill) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5.5px;border-radius:50%;background:var(--surface);border:3px solid var(--c);box-shadow:0 0 calc(10px * var(--glow-a)) var(--c);transition:transform .2s var(--ease)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--c);box-shadow:0 0 calc(10px * var(--glow-a)) var(--c)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field .lab{font-size:13.5px;font-weight:600}
+.switch{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:14px}
+.switch small{font-weight:400;color:var(--ink-3)}
+.switch input{appearance:none;-webkit-appearance:none;width:38px;height:22px;border-radius:22px;background:var(--line);position:relative;cursor:pointer;transition:background .3s;flex:none;margin:0}
+.switch input::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .35s var(--ease)}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
 
-.stab-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.pill{font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.08em;padding:3px 9px;border-radius:99px;border:1px solid currentColor}
+/* stability */
+.pill{font-family:var(--f-mono);font-stretch:87.5%;font-size:10.5px;letter-spacing:.14em;padding:4px 10px;border-radius:99px;border:1px solid currentColor;display:inline-flex;align-items:center;gap:6px}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
 .pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
-#poles{width:100%;height:220px;display:block;border:1px solid var(--line-2);border-radius:6px;background:var(--panel-2)}
-.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;margin-top:8px}
-.kv div{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dotted var(--line);padding-block:2px}
-.kv span:first-child{color:var(--ink-2)}
-.kv span:last-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.fine{font-size:12px;color:var(--ink-3);margin:8px 0 0}
+.pill.bad::before{animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+#poles{width:100%;height:190px;display:block;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2)}
+.stab-text{font-size:13px;color:var(--ink-2);margin:0 0 10px;min-height:1.5em}
+.gauges{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-top:12px}
+.gauge{width:128px}
+.gauge svg{width:100%;height:auto;display:block;overflow:visible}
+.gauge .zone{fill:none;stroke-width:8}
+.gauge .needle{stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;transform-origin:64px 64px;transition:transform .8s var(--ease)}
+.gauge .hub{fill:var(--ink)}
+.gauge text{font-family:var(--f-mono);font-stretch:87.5%;font-size:8px;fill:var(--ink-3)}
+.gauge .big{font-family:var(--f-display);font-weight:800;font-size:22px;fill:var(--ink);font-stretch:100%}
+.stats{display:grid;gap:6px}
+.stats div{display:flex;justify-content:space-between;gap:8px;font-size:13px;border-bottom:1px dashed var(--line);padding-bottom:4px}
+.stats span:first-child{color:var(--ink-2)}
+.stats span:last-child{font-family:var(--f-mono);font-stretch:87.5%;font-size:12px;font-variant-numeric:tabular-nums}
+.fine{font-size:11.5px;color:var(--ink-3);margin:10px 0 0;line-height:1.45}
 
-/* embedded lesson widgets */
-.widget{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:12px 0;background:var(--panel-2)}
-.widget h3{font-size:15px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.widget table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
-.widget th,.widget td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line-2);font-variant-numeric:tabular-nums}
+/* lesson widgets */
+.widget{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0;background:var(--surface-2)}
+.widget h3{font-family:var(--f-display);font-weight:800;font-size:19px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.widget table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 0}
+.widget th,.widget td{text-align:right;padding:5px 4px;border-bottom:1px solid var(--line-2);font-variant-numeric:tabular-nums}
+.widget th{font-family:var(--f-mono);font-stretch:87.5%;font-weight:400;font-size:10px;color:var(--ink-3);letter-spacing:.08em}
 .widget th:first-child,.widget td:first-child{text-align:left}
-.widget td{font-family:var(--f-mono);font-size:12px}
-.widget td:first-child{font-family:var(--f-body);font-size:13px}
-.zn-read{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
-.zn-read div{background:var(--panel);border:1px solid var(--line-2);border-radius:6px;padding:4px 8px}
-.zn-read .l{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
-.zn-read .v{font-family:var(--f-mono);font-size:14px}
-.score{display:flex;flex-direction:column;gap:4px;margin-top:8px}
-.score div{display:flex;justify-content:space-between;gap:8px;font-size:13px;align-items:center}
-.score .mono{font-size:12px}
-.chip{font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid currentColor}
-.chip.pass{color:var(--good)}.chip.fail{color:var(--bad)}.chip.wait{color:var(--ink-3)}
-.loop-svg{width:100%;max-width:330px;height:auto;display:block;margin:6px 0 12px}
-.loop-svg text{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink-2)}
-.loop-svg .bx{fill:var(--panel);stroke:var(--line)}
-.loop-svg .bx.hi{stroke:var(--accent)}
-.loop-svg .ln{stroke:var(--ink-3);fill:none;stroke-width:1.3}
+.widget td{font-family:var(--f-mono);font-stretch:87.5%;font-size:11.5px}
+.widget td:first-child{font-family:var(--f-body);font-size:13px;font-stretch:100%}
+.zn-read{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.zn-read div{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:6px 10px}
+.zn-read .l{font-family:var(--f-mono);font-stretch:87.5%;font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em}
+.zn-read .v{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.1}
+.score{display:flex;flex-direction:column;gap:6px;margin-top:10px;position:relative}
+.score .row{display:flex;justify-content:space-between;gap:8px;font-size:13px;align-items:center}
+.score .mono{font-size:11.5px;display:flex;align-items:center;gap:8px}
+.chip{font-family:var(--f-mono);font-stretch:87.5%;font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;letter-spacing:.08em}
+.chip.pass{color:var(--good);animation:pop .35s var(--ease)}.chip.fail{color:var(--bad);animation:pop .35s var(--ease)}.chip.wait{color:var(--ink-3)}
+.verdict{margin-top:6px;font-size:13.5px}
+.stamp{position:absolute;right:2px;bottom:-4px;font-family:var(--f-display);font-weight:900;font-size:26px;letter-spacing:.06em;color:var(--good);border:3px solid var(--good);border-radius:10px;padding:2px 10px;transform:rotate(-9deg);opacity:.9;animation:stamp .6s cubic-bezier(.2,1.6,.4,1) both;pointer-events:none;background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
+@keyframes stamp{from{transform:rotate(-9deg) scale(2.4);opacity:0}to{transform:rotate(-9deg) scale(1);opacity:.9}}
+
+/* loop diagram */
+.loop-svg{width:100%;max-width:340px;height:auto;display:block;margin:6px 0 14px}
+.loop-svg text{font-family:var(--f-mono);font-stretch:87.5%;font-size:9.5px;fill:var(--ink-2)}
+.loop-svg .bx{fill:var(--surface);stroke:var(--line)}
+.loop-svg .bx.hi{stroke:var(--sunset);stroke-width:1.5}
+.loop-svg .ln{stroke:var(--ink-3);fill:none;stroke-width:1.2}
+.loop-svg .flow{stroke:var(--accent);fill:none;stroke-width:1.6;stroke-dasharray:3 9;animation:flow 1.2s linear infinite}
 .loop-svg .ah{fill:var(--ink-3)}
 .loop-svg .t-strong{fill:var(--ink);font-weight:500}
+@keyframes flow{to{stroke-dashoffset:-24}}
 
+/* boot sequence */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes letter{from{opacity:0;transform:translateY(.5em) rotateX(70deg)}to{opacity:1;transform:none}}
+.boot .reveal{animation:rise .8s var(--ease) both;animation-delay:calc(var(--r,0) * 110ms + 150ms)}
+.boot .logo .ch{animation:letter .7s var(--ease) both;animation-delay:calc(var(--n) * 35ms)}
+
+/* ============ responsive ============ */
+@media (max-width:1380px){ .console{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:1100px){
-  .layout{grid-template-columns:1fr}
-  .lessons{position:static;max-height:none}
-  .lesson-body{max-height:none}
+  .deck{grid-template-columns:1fr}
+  .mission{height:auto;max-height:none}
+  .lesson-body{overflow:visible}
 }
-@media (max-width:760px){
-  .sim-row{grid-template-columns:1fr}
-  .scene-wrap{height:400px}
+@media (max-width:900px){
+  .stage{height:auto;display:flex;flex-direction:column;overflow:visible;background:transparent;border:0;box-shadow:none}
+  .stage .scene-box{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface)}
+  #scene{position:relative;height:440px}
+  .tools{position:static;max-width:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:8px 10px}
+  .telemetry{margin-top:14px}
+  .chart{min-height:130px}
+}
+@media (min-width:901px){ .stage .scene-box{position:absolute;inset:0} }
+@media (max-width:640px){
+  body{padding-inline:16px}
+  .logo{font-size:36px}
+  .top-right{margin-left:0;width:100%;justify-content:space-between}
+  .console{grid-template-columns:1fr}
   .metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
   .metric:nth-child(3){border-right:0}
-  .formula{margin-left:0;white-space:normal}
-  .top h1{font-size:26px}
+  .metric:nth-child(-n+3){border-bottom:1px solid var(--line-2)}
+  .hud .alt{font-size:48px}
+  .hud{left:48px}
+  .lesson-body h2{font-size:36px}
+  #scene{height:400px}
 }
-@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
 </style>
 </head>
-<body>
+<body class="boot">
+<div class="wrap">
 <header class="top">
-  <h1>PID <span>Flight</span> Lab</h1>
-  <p>Tune the altitude-hold controller of a 1&nbsp;kg quadcopter. Each lesson loads a setup that shows one tuning problem you will meet on real hardware.</p>
-  <div class="formula" aria-label="PID law">u = <b class="kp">K<sub>p</sub>·e</b> + <b class="ki">K<sub>i</sub>∫e dt</b> + <b class="kd">K<sub>d</sub>·de/dt</b></div>
+  <h1 class="logo" aria-label="PID Flight Lab"><span class="w">PID</span><span class="w grad">Flight</span><span class="w">Lab</span></h1>
+  <p class="tagline reveal" style="--r:0">Tune the altitude hold of a 1&nbsp;kg quadcopter at dusk. Each lesson loads a flight that shows a problem you will meet on real hardware.</p>
+  <div class="top-right reveal" style="--r:1">
+    <div class="formula" aria-label="PID law: u equals Kp times e plus Ki times the integral of e plus Kd times the derivative of e">
+      <span>u =</span><span class="term p">K<sub>p</sub>·e</span><span>+</span><span class="term i">K<sub>i</sub>∫e dt</span><span>+</span><span class="term d">K<sub>d</sub>·ė</span>
+    </div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to light theme"></button>
+  </div>
 </header>
 
-<div class="layout">
-  <aside class="lessons" aria-label="Lessons">
-    <nav class="lesson-nav" id="lessonNav"></nav>
+<div class="deck">
+  <aside class="panel mission reveal" style="--r:2" aria-label="Lessons">
+    <div class="plan-wrap">
+      <div class="plan-head"><span class="kicker">Flight plan</span><span class="kicker" id="planCount">01 / 12</span></div>
+      <ol class="plan" id="lessonNav"></ol>
+    </div>
     <div class="lesson-body" id="lessonBody"></div>
     <div class="lesson-actions">
-      <button class="btn" id="prevLesson" type="button">← Back</button>
-      <button class="btn primary" id="loadLesson" type="button">Load this setup</button>
+      <button class="btn ghost" id="prevLesson" type="button">← Back</button>
       <span class="spacer"></span>
+      <button class="btn primary" id="loadLesson" type="button">Fly this setup</button>
       <button class="btn" id="nextLesson" type="button">Next →</button>
     </div>
   </aside>
 
-  <main class="main">
-    <div class="sim-row">
-      <section class="card scene-card" aria-label="Flight view">
-        <div class="scene-wrap" id="sceneWrap"><canvas id="scene"></canvas></div>
-        <div class="scene-tools">
-          <button class="btn small" id="playBtn" type="button" aria-pressed="false">Pause</button>
-          <div class="seg" id="speedSeg" role="group" aria-label="Simulation speed">
-            <button type="button" data-s="0.25">¼×</button><button type="button" data-s="0.5">½×</button><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="2">2×</button>
-          </div>
-          <button class="btn small" id="resetBtn" type="button">Reset</button>
-          <button class="btn small" id="soundBtn" type="button" aria-pressed="false">Sound</button>
-          <span class="spacer"></span>
-          <div class="seg" role="group" aria-label="Target altitude">
-            <button type="button" data-sp="2">2 m</button><button type="button" data-sp="5">5 m</button><button type="button" data-sp="8">8 m</button>
-          </div>
+  <section class="stage reveal" style="--r:3" id="stage" aria-label="Flight view">
+    <div class="scene-box">
+      <canvas id="scene" aria-label="Drone flight view. Click to set target altitude; drag the drone to push it."></canvas>
+      <div class="hud" aria-live="off">
+        <div class="alt"><span id="hAlt">0.00</span><small>m</small></div>
+        <div class="row"><span>VEL <b id="hVel">+0.00</b> m/s</span><span>T <b id="hT">0.0</b> s</span></div>
+        <div class="row"><span>THRUST</span><span class="thrbar"><i id="hThr"></i><s id="hHover"></s></span><b id="hThrN">0.0 N</b></div>
+        <div class="tags" id="hTags"></div>
+      </div>
+      <div class="tools panel">
+        <button class="btn small" id="playBtn" type="button" aria-pressed="false">❚❚ Pause</button>
+        <div class="seg" id="speedSeg" role="group" aria-label="Simulation speed"><span class="ind"></span>
+          <button type="button" data-v="0.25">¼×</button><button type="button" data-v="0.5">½×</button><button type="button" data-v="1">1×</button><button type="button" data-v="2">2×</button>
         </div>
-        <div class="hint">Click the sky to set the target altitude. Drag the drone to push it around by hand.</div>
-      </section>
-
-      <section class="card charts" aria-label="Telemetry">
-        <div class="chart"><canvas id="chAlt"></canvas>
-          <div class="chart-label"><span class="t">Altitude</span>
-            <span class="key" style="color:var(--ink-3)"><i class="dash"></i>target</span>
-            <span class="key"><i style="background:var(--accent)"></i>altitude</span>
-            <span class="key"><i style="background:var(--ink-3);opacity:.5"></i>sensor</span></div></div>
-        <div class="chart"><canvas id="chThr"></canvas>
-          <div class="chart-label"><span class="t">Thrust</span>
-            <span class="key"><i style="background:var(--thrust);opacity:.45"></i>PID asks</span>
-            <span class="key"><i style="background:var(--thrust)"></i>motors give</span>
-            <span class="key" style="color:var(--ink-3)"><i class="dash"></i>hover</span></div></div>
-        <div class="chart"><canvas id="chPid"></canvas>
-          <div class="chart-label"><span class="t">Terms</span>
-            <span class="key"><i style="background:var(--p)"></i>P <b class="mono" id="lvP">0</b></span>
-            <span class="key"><i style="background:var(--i)"></i>I <b class="mono" id="lvI">0</b></span>
-            <span class="key"><i style="background:var(--d)"></i>D <b class="mono" id="lvD">0</b></span></div></div>
-        <div class="metrics" aria-label="Step response metrics">
-          <div class="metric"><div class="l">Overshoot</div><div class="v" id="mOS">—</div></div>
-          <div class="metric"><div class="l">Rise 10–90%</div><div class="v" id="mRise">—</div></div>
-          <div class="metric"><div class="l">Settle ±2%</div><div class="v" id="mSettle">—</div></div>
-          <div class="metric"><div class="l">Error now</div><div class="v" id="mErr">—</div></div>
-          <div class="metric"><div class="l">Motor jitter</div><div class="v" id="mJit">—</div></div>
-        </div>
-      </section>
+        <button class="btn small" id="resetBtn" type="button">↺ Reset</button>
+        <button class="btn small" id="soundBtn" type="button" aria-pressed="false">♪ Sound</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="btn small" type="button" data-sp="2">2 m</button><button class="btn small" type="button" data-sp="5">5 m</button><button class="btn small" type="button" data-sp="8">8 m</button>
+      </div>
     </div>
 
-    <div class="controls">
-      <section class="card"><div class="card-h"><h3>Gains</h3></div><div class="card-b">
-        <div class="ctl kp"><label for="kp"><span>K<sub>p</sub></span> proportional <small>N/m</small></label><output id="kpO"></output><input type="range" id="kp" min="0" max="30" step="0.1"></div>
-        <div class="ctl ki"><label for="ki"><span>K<sub>i</sub></span> integral <small>N/(m·s)</small></label><output id="kiO"></output><input type="range" id="ki" min="0" max="30" step="0.1"></div>
-        <div class="ctl kd"><label for="kd"><span>K<sub>d</sub></span> derivative <small>N·s/m</small></label><output id="kdO"></output><input type="range" id="kd" min="0" max="15" step="0.05"></div>
-        <div class="row"><button class="btn small" id="zeroI" type="button">Reset integrator</button></div>
-      </div></section>
-
-      <section class="card"><div class="card-h"><h3>Controller</h3></div><div class="card-b">
-        <div class="row"><span class="lab">Derivative acts on</span>
-          <div class="seg" id="dSeg" role="group" aria-label="Derivative source"><button type="button" data-v="meas">measurement</button><button type="button" data-v="err">error</button></div></div>
-        <div class="ctl"><label for="tf">Derivative filter <small>τ<sub>f</sub></small></label><output id="tfO"></output><input type="range" id="tf" min="0" max="0.3" step="0.005"></div>
-        <div class="row"><span class="lab">Anti-windup</span>
-          <div class="seg" id="awSeg" role="group" aria-label="Anti-windup"><button type="button" data-v="none">off</button><button type="button" data-v="clamp">clamping</button><button type="button" data-v="back">back-calc</button></div></div>
-        <label class="check"><input type="checkbox" id="ff"> Hover feedforward <small>adds m·g for 1 kg</small></label>
-        <div class="row"><span class="lab">Control loop rate</span>
-          <div class="seg" id="rateSeg" role="group" aria-label="Control rate"><button type="button" data-v="10">10 Hz</button><button type="button" data-v="25">25</button><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button><button type="button" data-v="200">200</button></div></div>
-      </div></section>
-
-      <section class="card"><div class="card-h"><h3>Drone &amp; weather</h3></div><div class="card-b">
-        <div class="ctl"><label for="noise">Sensor noise <small>σ</small></label><output id="noiseO"></output><input type="range" id="noise" min="0" max="0.1" step="0.001"></div>
-        <div class="ctl"><label for="delay">Sensor delay</label><output id="delayO"></output><input type="range" id="delay" min="0" max="0.4" step="0.005"></div>
-        <div class="ctl"><label for="mass">Mass incl. payload</label><output id="massO"></output><input type="range" id="mass" min="0.5" max="2" step="0.05"></div>
-        <div class="ctl"><label for="wind">Steady wind <small>+ up / − down</small></label><output id="windO"></output><input type="range" id="wind" min="-8" max="8" step="0.1"></div>
-        <div class="row">
-          <button class="btn small" id="gustDown" type="button">Gust ↓</button>
-          <button class="btn small" id="gustUp" type="button">Gust ↑</button>
-          <button class="btn small" id="tetherBtn" type="button" aria-pressed="false">Tether to ground</button>
-        </div>
-      </div></section>
-
-      <section class="card"><div class="card-h"><h3>Stability</h3></div><div class="card-b">
-        <div class="stab-top"><span class="pill good" id="stabPill">STABLE</span><span id="stabText" style="font-size:13px;color:var(--ink-2)"></span></div>
-        <canvas id="poles" aria-label="Closed-loop pole map"></canvas>
-        <div class="kv">
-          <div><span>Damping ζ</span><span id="aZeta">—</span></div>
-          <div><span>Freq ω</span><span id="aW">—</span></div>
-          <div><span>Phase margin</span><span id="aPM">—</span></div>
-          <div><span>Gain margin</span><span id="aGM">—</span></div>
-        </div>
-        <p class="fine">Closed-loop poles of the linear model (dots trace K<sub>p</sub> from 0 to 30). Ignores thrust limits and the ground.</p>
-      </div></section>
+    <div class="telemetry panel" id="telemetry" aria-label="Telemetry">
+      <div class="chart">
+        <div class="chart-h"><span class="t">Altitude</span>
+          <span class="key"><i class="dash" style="border-color:var(--sunset)"></i>target</span>
+          <span class="key"><i style="background:var(--accent)"></i><b id="lvZ">0.00</b></span>
+          <span class="key"><i style="background:var(--ink-3)"></i>sensor</span></div>
+        <div class="chart-c"><canvas id="chAlt"></canvas></div></div>
+      <div class="chart">
+        <div class="chart-h"><span class="t">Thrust</span>
+          <span class="key"><i style="background:var(--thrust);opacity:.4"></i>PID asks</span>
+          <span class="key"><i style="background:var(--thrust)"></i><b id="lvT">0.0</b></span>
+          <span class="key"><i class="dash" style="border-color:var(--ink-3)"></i>hover</span></div>
+        <div class="chart-c"><canvas id="chThr"></canvas></div></div>
+      <div class="chart">
+        <div class="chart-h"><span class="t">Terms</span>
+          <span class="key"><i style="background:var(--p)"></i>P <b id="lvP">0</b></span>
+          <span class="key"><i style="background:var(--i)"></i>I <b id="lvI">0</b></span>
+          <span class="key"><i style="background:var(--d)"></i>D <b id="lvD">0</b></span></div>
+        <div class="chart-c"><canvas id="chPid"></canvas></div></div>
+      <div class="metrics" aria-label="Step response metrics">
+        <div class="metric"><div class="l">Overshoot</div><div class="v" id="mOS">—</div></div>
+        <div class="metric"><div class="l">Rise 10–90</div><div class="v" id="mRise">—</div></div>
+        <div class="metric"><div class="l">Settle ±2%</div><div class="v" id="mSettle">—</div></div>
+        <div class="metric"><div class="l">Error</div><div class="v" id="mErr">—</div></div>
+        <div class="metric"><div class="l">Jitter</div><div class="v" id="mJit">—</div></div>
+      </div>
     </div>
-  </main>
+  </section>
+</div>
+
+<div class="console">
+  <section class="panel card reveal" style="--r:4" aria-label="Gains">
+    <div class="card-h"><h3>Gains</h3><span class="kicker">drag · scroll · type</span></div>
+    <div class="knobs" id="knobs"></div>
+    <div class="btn-row" style="margin-top:12px;justify-content:space-between;align-items:center">
+      <span class="hint" style="margin:0">Inner ring shows each term's live push.</span>
+      <button class="btn small" id="zeroI" type="button">Reset integrator</button>
+    </div>
+  </section>
+
+  <section class="panel card reveal" style="--r:5" aria-label="Controller">
+    <div class="card-h"><h3>Controller</h3></div>
+    <div class="field"><span class="lab">Derivative acts on</span>
+      <div class="seg" id="dSeg" role="group" aria-label="Derivative source"><span class="ind"></span><button type="button" data-v="meas">measurement</button><button type="button" data-v="err">error</button></div></div>
+    <div class="ctl"><label for="tf">Derivative filter <small>τ<sub>f</sub></small></label><output id="tfO"></output><input type="range" id="tf" min="0" max="0.3" step="0.005" style="--c:var(--d)"></div>
+    <div class="field"><span class="lab">Anti-windup</span>
+      <div class="seg" id="awSeg" role="group" aria-label="Anti-windup"><span class="ind"></span><button type="button" data-v="none">off</button><button type="button" data-v="clamp">clamping</button><button type="button" data-v="back">back-calc</button></div></div>
+    <label class="switch"><input type="checkbox" id="ff"> Hover feedforward <small>+ m·g for 1 kg</small></label>
+    <div class="field" style="margin-bottom:0"><span class="lab">Control loop rate</span>
+      <div class="seg" id="rateSeg" role="group" aria-label="Control rate"><span class="ind"></span><button type="button" data-v="10">10</button><button type="button" data-v="25">25</button><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button><button type="button" data-v="200">200 Hz</button></div></div>
+  </section>
+
+  <section class="panel card reveal" style="--r:6" aria-label="Drone and weather">
+    <div class="card-h"><h3>Drone &amp; weather</h3></div>
+    <div class="ctl"><label for="noise">Sensor noise <small>σ</small></label><output id="noiseO"></output><input type="range" id="noise" min="0" max="0.1" step="0.001"></div>
+    <div class="ctl"><label for="delay">Sensor delay</label><output id="delayO"></output><input type="range" id="delay" min="0" max="0.4" step="0.005"></div>
+    <div class="ctl"><label for="mass">Mass incl. payload</label><output id="massO"></output><input type="range" id="mass" min="0.5" max="2" step="0.05" style="--c:var(--thrust)"></div>
+    <div class="ctl"><label for="wind">Steady wind <small>+ up / − down</small></label><output id="windO"></output><input type="range" id="wind" min="-8" max="8" step="0.1" style="--c:var(--sunset)"></div>
+    <div class="btn-row">
+      <button class="btn small" id="gustDown" type="button">Gust ↓</button>
+      <button class="btn small" id="gustUp" type="button">Gust ↑</button>
+      <button class="btn small" id="tetherBtn" type="button" aria-pressed="false">Tether to ground</button>
+    </div>
+  </section>
+
+  <section class="panel card reveal" style="--r:7" aria-label="Stability">
+    <div class="card-h"><h3>Stability</h3><span class="pill good" id="stabPill" style="margin-left:auto">STABLE</span></div>
+    <p class="stab-text" id="stabText"></p>
+    <canvas id="poles" aria-label="Closed-loop pole map"></canvas>
+    <div class="gauges">
+      <div class="gauge" aria-label="Phase margin gauge">
+        <svg viewBox="0 0 128 78" id="pmGauge">
+          <path class="zone" d="M 12 64 A 52 52 0 0 1 38 18.97" style="stroke:var(--bad)"/>
+          <path class="zone" d="M 38 18.97 A 52 52 0 0 1 64 12" style="stroke:var(--warn)"/>
+          <path class="zone" d="M 64 12 A 52 52 0 0 1 116 64" style="stroke:var(--good)"/>
+          <line class="needle" id="pmNeedle" x1="64" y1="64" x2="64" y2="20"/>
+          <circle class="hub" cx="64" cy="64" r="4"/>
+          <text x="8" y="76">0°</text><text x="58" y="7">45°</text><text x="108" y="76">90°</text>
+        </svg>
+      </div>
+      <div class="stats">
+        <div><span>Phase margin</span><span id="aPM">—</span></div>
+        <div><span>Gain margin</span><span id="aGM">—</span></div>
+        <div><span>Damping ζ</span><span id="aZeta">—</span></div>
+        <div><span>Ring freq ω</span><span id="aW">—</span></div>
+      </div>
+    </div>
+    <p class="fine">Closed-loop poles of the linear model. Faint dots trace K<sub>p</sub> from 0 to 30. Dashed lines mark ζ = 0.7. Ignores thrust limits and the ground.</p>
+  </section>
+</div>
 </div>
 
 <script>
@@ -319,7 +496,7 @@ button,input,select{font:inherit;color:inherit}
 // ---------- constants ----------
 const G = 9.81, DRAG = 0.8, TAU_M = 0.08, TMAX = 25, M_NOM = 1, ZMAX = 10;
 const PHYS_DT = 0.001, REC_DT = 0.005, WINDOW = 20, NREC = Math.round(WINDOW / REC_DT);
-const HIST = 2048;
+const HIST = 2048, FWD = 2.2;
 
 const DEFAULTS = { kp:8, ki:4, kd:4, tf:0.02, dsrc:'meas', aw:'clamp', ff:false, rate:100,
   noise:0.003, delay:0, mass:1, wind:0 };
@@ -329,8 +506,9 @@ const cfg = { ...DEFAULTS };
 const sim = {};
 const rec = {};
 ['t','z','sp','meas','uu','us','T','p','i','d'].forEach(k => rec[k] = new Float32Array(NREC));
-let recHead = 0, recCount = 0, recAcc = 0;
+let recHead = 0, recCount = 0, recAcc = 0, trailAcc = 0;
 let running = true, speed = 1;
+let trail = [];
 
 function resetSim(opts = {}) {
   const z0 = opts.z ?? 0, hover = !!opts.hover;
@@ -338,12 +516,13 @@ function resetSim(opts = {}) {
     t: 0, z: z0, v: 0, T: hover ? cfg.mass * G : 0,
     sp: opts.sp ?? 4, I: hover ? cfg.mass * G - (cfg.ff ? M_NOM * G : 0) : 0,
     dF: 0, prevX: 0, first: true, u: 0, uu: 0, Pt: 0, Dt: 0, meas: z0, nextCtrl: 0,
-    hist: new Float32Array(HIST).fill(z0), hi: 0, grab: null, tether: false,
+    hist: new Float32Array(HIST).fill(z0), hi: 0, grab: null, tether: false, tetherX: 0,
     gusts: [], script: (opts.script || []).map(e => ({ ...e })), uEma: hover ? cfg.mass * G : 0, jitVar: 0,
-    impact: 0, flash: null,
+    flash: null, wx: 0, vx: 0, gustNow: 0,
   });
   sim.u = sim.T;
-  recHead = 0; recCount = 0; recAcc = 0;
+  recHead = 0; recCount = 0; recAcc = 0; trailAcc = 0;
+  trail = [];
   beginStep(z0, sim.sp, 0);
   setTetherUI(false);
   zn.reset();
@@ -399,6 +578,7 @@ function controllerTick() {
   sim.jitVar += (Ts / 0.5) * ((us - sim.uEma) ** 2 - sim.jitVar);
 }
 
+const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function physicsStep() {
   const dt = PHYS_DT;
   // scripted events
@@ -421,15 +601,25 @@ function physicsStep() {
     sim.v += F / cfg.mass * dt;
     sim.z += sim.v * dt;
     if (sim.z <= 0) {
-      if (sim.v < -3.5) { sim.impact = Math.min(1, -sim.v / 10); sim.flash = { t: performance.now(), s: -sim.v }; }
+      if (sim.v < -3.5) { sim.flash = { t: performance.now(), s: -sim.v }; burst(-sim.v); }
       sim.z = 0; if (sim.v < 0) sim.v = 0;
     }
     if (sim.z > 40) { sim.z = 40; sim.v = Math.min(sim.v, 0); }
   }
+  // cosmetic forward flight: cruise once airborne, hold still when held
+  const held = sim.tether || sim.grab !== null;
+  sim.vx = held ? 0 : FWD * smooth(0.05, 0.8, sim.z);
+  sim.wx += sim.vx * dt;
   sim.hi = (sim.hi + 1) % HIST; sim.hist[sim.hi] = sim.z;
   sim.t += dt;
   recAcc += dt;
   if (recAcc >= REC_DT - 1e-9) { recAcc -= REC_DT; record(); }
+  trailAcc += dt;
+  if (trailAcc >= 1 / 40) {
+    trailAcc = 0;
+    trail.push({ x: sim.wx, z: sim.z, sp: sim.sp, sat: sim.uu > TMAX + 0.01 || sim.uu < -0.01, t: sim.t });
+    if (trail.length > 2400) trail.shift();
+  }
 }
 
 function record() {
@@ -438,7 +628,6 @@ function record() {
   rec.uu[h] = sim.uu; rec.us[h] = sim.u; rec.T[h] = sim.T;
   rec.p[h] = sim.Pt; rec.i[h] = sim.I; rec.d[h] = sim.Dt;
   recHead = (recHead + 1) % NREC; recCount = Math.min(NREC, recCount + 1);
-  // step metrics
   if (step && Math.abs(step.r - step.y0) >= 0.2) {
     const span = step.r - step.y0, prog = (sim.z - step.y0) / span;
     if (prog > step.maxProg) step.maxProg = prog;
@@ -550,16 +739,16 @@ function analyze() {
     const kp = 30 * Math.pow(k / 70, 1.6) + 0.05;
     for (const r of roots(charPoly(kp, cfg.ki, cfg.kd))) locus.push([r[0], r[1], k / 70]);
   }
-  let dom = ps.reduce((a, b) => (b[0] > a[0] ? b : a), [-Infinity, 0]);
-  // prefer the oscillatory one among near-equal real parts
+  const dom = ps.reduce((a, b) => (b[0] > a[0] ? b : a), [-Infinity, 0]);
   const maxRe = dom[0];
-  let state = maxRe > 1e-3 ? 'bad' : maxRe > -0.05 ? 'warn' : 'good';
+  const state = maxRe > 1e-3 ? 'bad' : maxRe > -0.05 ? 'warn' : 'good';
   const osc = ps.filter(p => p[1] > 1e-6).sort((a, b) => b[0] - a[0])[0];
   analysis = { ps, locus, dom, osc, state, mg: margins() };
-  drawPoles();
+  matchPoles(ps);
   const pill = $('stabPill');
   pill.className = 'pill ' + state;
   pill.textContent = state === 'bad' ? 'UNSTABLE' : state === 'warn' ? 'MARGINAL' : 'STABLE';
+  $('stage').classList.toggle('alarm', state === 'bad');
   const lp = osc || dom;
   const wn = Math.hypot(lp[0], lp[1]);
   const zeta = wn > 0 ? -lp[0] / wn : 1;
@@ -572,21 +761,27 @@ function analyze() {
   const { pm, gm } = analysis.mg;
   $('aPM').textContent = isFinite(pm) ? pm.toFixed(0) + '°' : '∞';
   $('aGM').textContent = isFinite(gm) ? gm.toFixed(1) + ' dB' : '∞';
+  const pmClamped = isFinite(pm) ? Math.max(-10, Math.min(95, pm)) : 95;
+  $('pmNeedle').style.transform = `rotate(${(pmClamped / 90) * 180 - 90}deg)`;
 }
 
 // ---------- helpers & theme ----------
 const $ = id => document.getElementById(id);
-let C = {};
+let C = {}, hatch = null;
+const TOKENS = ['bg','surface','surface-2','ink','ink-2','ink-3','line','accent','sunset','sunset-2','thrust','p','i','d','good','warn','bad','glow-a',
+  'sky-0','sky-1','sky-2','sky-3','sun','star','ridge-1','ridge-2','ridge-3','ground-0','ground-1','horizon','light','drone-body','drone-hi','rotor','plume'];
 function readTheme() {
   const cs = getComputedStyle(document.documentElement);
-  ['bg','panel','panel-2','ink','ink-2','ink-3','line','accent','thrust','p','i','d','good','warn','bad','sky-top','sky-bot','ground','ground-2','pad','drone','rotor','grid','grid-2','sat']
-    .forEach(k => C[k] = cs.getPropertyValue('--' + k).trim());
-  if (analysis) drawPoles();
+  TOKENS.forEach(k => C[k] = cs.getPropertyValue('--' + k).trim());
+  C.glowA = parseFloat(C['glow-a']) || 0; C.starA = parseFloat(C.star) || 0;
+  C.fmono = cs.getPropertyValue('--f-mono'); C.fdisp = cs.getPropertyValue('--f-display');
+  hatch = null;
 }
-readTheme();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTheme);
-new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
-
+function hexA(hex, a) {
+  if (!hex || hex[0] !== '#') return hex;
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
 function fitCanvas(cv) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = cv.clientWidth, h = cv.clientHeight;
@@ -596,177 +791,324 @@ function fitCanvas(cv) {
 }
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ---------- scene ----------
-const sceneCv = $('scene');
-const particles = [];
-const windStreaks = Array.from({ length: 34 }, () => ({ x: Math.random(), y: Math.random(), l: 0.4 + Math.random() * 0.6 }));
-let rotorPhase = 0;
-function sceneGeom(w, h) {
-  const top = 22, groundH = 46, bottom = h - groundH;
-  const scale = (bottom - top) / ZMAX;
-  return { top, bottom, scale, yOf: z => bottom - z * scale, zOf: y => (bottom - y) / scale, cx: w * 0.56 };
+// theme toggle
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : darkMQ.matches; };
+const SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+function paintThemeBtn() {
+  const d = isDark();
+  $('themeBtn').innerHTML = d ? SUN : MOON;
+  $('themeBtn').setAttribute('aria-label', d ? 'Switch to dawn (light) theme' : 'Switch to dusk (dark) theme');
 }
-function drawScene(frameDt) {
+try { const t = localStorage.getItem('pidlab-theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
+$('themeBtn').onclick = () => {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('pidlab-theme', next); } catch (e) {}
+};
+readTheme(); paintThemeBtn();
+darkMQ.addEventListener('change', () => { readTheme(); paintThemeBtn(); });
+new MutationObserver(() => { readTheme(); paintThemeBtn(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+// ---------- scene ----------
+const stageEl = $('stage'), sceneCv = $('scene'), teleEl = $('telemetry');
+const stars = Array.from({ length: 150 }, () => ({ x: Math.random(), y: Math.random() * 0.62, r: Math.random() * 1.2 + 0.3, ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 2 }));
+const dust = [], streaks = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), l: 0.4 + Math.random() * 0.6 }));
+let rotorPhase = 0, bootT = performance.now(), shake = 0, overlay = false, teleW = 0;
+
+function layoutStage() {
+  const w = stageEl.clientWidth;
+  overlay = w > 900 - 40 && window.innerWidth > 900;
+  teleW = Math.round(Math.max(320, Math.min(500, w * 0.37)));
+  stageEl.classList.toggle('overlay', overlay);
+  stageEl.style.setProperty('--tele-w', teleW + 'px');
+}
+function sceneGeom(w, h) {
+  const top = 34, bottom = h - 74;
+  const scale = (bottom - top) / ZMAX;
+  const contentW = overlay ? w - teleW - 32 : w;
+  return { top, bottom, scale, contentW, droneX: contentW * 0.6, yOf: z => bottom - z * scale, zOf: y => (bottom - y) / scale };
+}
+function ridge(x, seed, amp) {
+  return amp * (0.55 * Math.sin(x * 0.0061 + seed) + 0.28 * Math.sin(x * 0.0137 + seed * 2.1) + 0.17 * Math.abs(Math.sin(x * 0.031 + seed * 3.7)));
+}
+function burst(v) {
+  shake = Math.min(14, v * 1.4);
+  for (let k = 0; k < 60; k++) dust.push({ x: 0, y: 0, vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 3.5, life: 1, rel: true });
+}
+function drawScene(dt) {
   const { ctx, w, h } = fitCanvas(sceneCv);
   const g = sceneGeom(w, h);
+  const now = performance.now(), boot = (now - bootT) / 1000;
+  ctx.save();
+  if (shake > 0.2 && !reduceMotion) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.9; } else shake = 0;
+
   // sky
   const sky = ctx.createLinearGradient(0, 0, 0, g.bottom);
-  sky.addColorStop(0, C['sky-top']); sky.addColorStop(1, C['sky-bot']);
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
-  // wind streaks
-  const windF = cfg.wind + (sim.gustNow || 0);
-  if (Math.abs(windF) > 0.2) {
-    ctx.strokeStyle = C['ink-3']; ctx.lineWidth = 1;
-    const vel = windF * 0.012;
-    for (const s of windStreaks) {
-      if (!reduceMotion && running) s.y -= vel * frameDt * 60 * 0.4 * speed;
-      if (s.y < 0) s.y += 1; if (s.y > 1) s.y -= 1;
-      const x = 46 + s.x * (w - 56), y = g.top + s.y * (g.bottom - g.top);
-      const len = Math.min(60, Math.abs(windF) * 4 * s.l + 6);
-      ctx.globalAlpha = Math.min(0.55, Math.abs(windF) / 12 + 0.1);
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + Math.sign(windF) * len); ctx.stroke();
+  sky.addColorStop(0, C['sky-0']); sky.addColorStop(0.45, C['sky-1']); sky.addColorStop(0.8, C['sky-2']); sky.addColorStop(1, C['sky-3']);
+  ctx.fillStyle = sky; ctx.fillRect(-20, -20, w + 40, h + 40);
+  // sun glow at the horizon
+  const sx = g.contentW * 0.28, sun = ctx.createRadialGradient(sx, g.bottom, 0, sx, g.bottom, Math.max(w, h) * 0.55);
+  sun.addColorStop(0, hexA(C.sun, 0.75)); sun.addColorStop(0.25, hexA(C.sun, 0.25)); sun.addColorStop(1, hexA(C.sun, 0));
+  ctx.fillStyle = sun; ctx.fillRect(0, 0, w, g.bottom);
+  // stars
+  if (C.starA > 0) {
+    const tt = now / 1000;
+    for (const s of stars) {
+      const a = C.starA * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tt * s.sp + s.ph))) * (1 - s.y / 0.7);
+      ctx.fillStyle = `rgba(235,240,255,${a.toFixed(3)})`;
+      ctx.fillRect(s.x * w, s.y * g.bottom, s.r, s.r);
     }
-    ctx.globalAlpha = 1;
+  }
+  // parallax ridges
+  const scroll = sim.wx * g.scale;
+  const layers = [[0.06, 1.3, 0.25, C['ridge-1']], [0.16, 4.2, 0.16, C['ridge-2']], [0.34, 7.9, 0.08, C['ridge-3']]];
+  for (const [par, seed, hf, col] of layers) {
+    const base = g.bottom - h * hf;
+    ctx.beginPath(); ctx.moveTo(-10, g.bottom + 1);
+    for (let x = -10; x <= w + 10; x += 6) ctx.lineTo(x, base - ridge(x + scroll * par, seed, h * hf * 0.55));
+    ctx.lineTo(w + 10, g.bottom + 1); ctx.closePath();
+    ctx.fillStyle = col; ctx.fill();
+  }
+  // horizon haze
+  const haze = ctx.createLinearGradient(0, g.bottom - 60, 0, g.bottom);
+  haze.addColorStop(0, hexA(C.horizon, 0)); haze.addColorStop(1, hexA(C.horizon, 0.22));
+  ctx.fillStyle = haze; ctx.fillRect(0, g.bottom - 60, w, 60);
+  // ground
+  const gr = ctx.createLinearGradient(0, g.bottom, 0, h);
+  gr.addColorStop(0, C['ground-0']); gr.addColorStop(1, C['ground-1']);
+  ctx.fillStyle = gr; ctx.fillRect(-20, g.bottom, w + 40, h - g.bottom + 20);
+  ctx.fillStyle = hexA(C.horizon, 0.55); ctx.fillRect(0, g.bottom, w, 1);
+  // runway lights (turn on in sequence at boot)
+  const spacing = 3 * g.scale, off = ((scroll % spacing) + spacing) % spacing;
+  let li = 0;
+  for (let x = -off; x < w + spacing; x += spacing, li++) {
+    const on = reduceMotion ? 1 : Math.max(0, Math.min(1, (boot - 0.4 - (x / w) * 1.1) / 0.25));
+    if (on <= 0) continue;
+    const y = g.bottom + 16;
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, 14);
+    halo.addColorStop(0, hexA(C.light, 0.55 * on)); halo.addColorStop(1, hexA(C.light, 0));
+    ctx.fillStyle = halo; ctx.fillRect(x - 14, y - 14, 28, 28);
+    ctx.fillStyle = hexA(C.light, on); ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
+  }
+  // runway centre line
+  ctx.strokeStyle = hexA(C.ink, 0.12); ctx.lineWidth = 2; ctx.setLineDash([22, 26]); ctx.lineDashOffset = scroll % 48;
+  ctx.beginPath(); ctx.moveTo(0, g.bottom + 34); ctx.lineTo(w, g.bottom + 34); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+  // launch pad at world x = 0
+  const padX = g.droneX - sim.wx * g.scale;
+  if (padX > -80 && padX < w + 80) {
+    ctx.fillStyle = hexA(C.ink, 0.25); ctx.fillRect(padX - 52, g.bottom, 104, 5);
+    ctx.fillStyle = C.sunset; ctx.fillRect(padX - 52, g.bottom, 6, 3); ctx.fillRect(padX + 46, g.bottom, 6, 3);
+    ctx.font = `500 9px ${C.fmono}`; ctx.fillStyle = hexA(C.ink, 0.5); ctx.textAlign = 'center';
+    ctx.fillText('PAD 01', padX, g.bottom + 52);
   }
   // altitude ruler
-  ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
-  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.font = `500 9.5px ${C.fmono}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   for (let m = 0; m <= ZMAX; m++) {
     const y = g.yOf(m);
-    ctx.strokeStyle = m % 5 === 0 ? C['grid-2'] : C.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(38, y + 0.5); ctx.lineTo(w, y + 0.5); ctx.stroke();
-    ctx.fillStyle = C['ink-3']; ctx.fillText(m + ' m', 32, y);
+    ctx.fillStyle = hexA(C.ink, m % 5 === 0 ? 0.55 : 0.3);
+    ctx.fillRect(14, y, m % 5 === 0 ? 12 : 7, 1);
+    if (m % 2 === 0) ctx.fillText(m + '', 30, y);
+    ctx.fillStyle = hexA(C.ink, 0.045); ctx.fillRect(44, y, g.contentW - 44, 1);
   }
-  // ground
-  ctx.fillStyle = C.ground; ctx.fillRect(0, g.bottom, w, h - g.bottom);
-  ctx.fillStyle = C['ground-2']; ctx.fillRect(0, g.bottom, w, 3);
-  ctx.fillStyle = C.pad; ctx.fillRect(g.cx - 44, g.bottom, 88, 6);
-  ctx.textAlign = 'center'; ctx.fillStyle = C['ink-2']; ctx.font = '600 11px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
-  ctx.fillText('PAD', g.cx, g.bottom + 22);
-  // setpoint
-  const ys = g.yOf(sim.sp);
-  ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
-  ctx.beginPath(); ctx.moveTo(40, ys); ctx.lineTo(w, ys); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = C.accent; ctx.beginPath(); ctx.moveTo(w - 4, ys); ctx.lineTo(w - 14, ys - 7); ctx.lineTo(w - 14, ys + 7); ctx.fill();
-  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  ctx.fillText('TARGET ' + sim.sp.toFixed(2) + ' m', w - 18, ys - 4);
 
-  // drone
-  const zVis = Math.min(sim.z, ZMAX + 0.8);
+  // trails: target history (dashed) and altitude contrail
+  const px = p => g.droneX - (sim.wx - p.x) * g.scale;
+  while (trail.length && (px(trail[0]) < -40 || sim.t - trail[0].t > 40)) trail.shift();
+  const zVis = Math.min(sim.z, ZMAX + 0.6);
+  const droneY = g.yOf(zVis);
+  // target: past (dashed) and ahead (solid)
+  ctx.lineWidth = 1.6; ctx.strokeStyle = hexA(C.sunset, 0.75); ctx.setLineDash([6, 6]);
+  ctx.beginPath();
+  trail.forEach((p, k) => { const x = px(p), y = g.yOf(p.sp); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+  ctx.lineTo(g.droneX, g.yOf(sim.sp)); ctx.stroke(); ctx.setLineDash([]);
+  const ys = g.yOf(sim.sp);
+  const ahead = ctx.createLinearGradient(g.droneX, 0, g.contentW, 0);
+  ahead.addColorStop(0, hexA(C.sunset, 0.9)); ahead.addColorStop(1, hexA(C.sunset, 0.15));
+  ctx.strokeStyle = ahead; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(g.droneX, ys); ctx.lineTo(g.contentW - 10, ys); ctx.stroke();
+  // target beacon
+  const bx = g.contentW - 26, pulse = reduceMotion ? 0.5 : (now / 1400) % 1;
+  ctx.strokeStyle = hexA(C.sunset, 0.7 * (1 - pulse)); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(bx, ys, 5 + pulse * 16, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = C.sunset; ctx.beginPath(); ctx.moveTo(bx, ys - 6); ctx.lineTo(bx + 6, ys); ctx.lineTo(bx, ys + 6); ctx.lineTo(bx - 6, ys); ctx.closePath(); ctx.fill();
+  ctx.font = `500 10px ${C.fmono}`; ctx.textBaseline = 'bottom'; ctx.fillStyle = C.sunset;
+  // on narrow stages the label would sit on the drone, so move it next to the altitude ruler
+  if (g.contentW < 520) { ctx.textAlign = 'left'; ctx.fillText('TARGET ' + sim.sp.toFixed(2) + ' m', 48, ys - 6); }
+  else { ctx.textAlign = 'right'; ctx.fillText('TARGET ' + sim.sp.toFixed(2) + ' m', bx - 12, ys - 6); }
+
+  // contrail
+  if (trail.length > 1) {
+    const x0 = px(trail[0]);
+    const grad = ctx.createLinearGradient(Math.min(x0, g.droneX - 1), 0, g.droneX, 0);
+    grad.addColorStop(0, hexA(C.accent, 0)); grad.addColorStop(1, hexA(C.accent, 1));
+    const path = new Path2D();
+    trail.forEach((p, k) => { const x = px(p), y = g.yOf(Math.min(p.z, ZMAX + 0.6)); k ? path.lineTo(x, y) : path.moveTo(x, y); });
+    path.lineTo(g.droneX, droneY);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (C.glowA > 0) { ctx.strokeStyle = grad; ctx.globalAlpha = 0.18 * C.glowA; ctx.lineWidth = 10; ctx.stroke(path); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = grad; ctx.lineWidth = 2.6; ctx.stroke(path);
+    // saturation segments
+    ctx.strokeStyle = hexA(C.bad, 0.9); ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let k = 1; k < trail.length; k++) if (trail[k].sat) { ctx.moveTo(px(trail[k-1]), g.yOf(Math.min(trail[k-1].z, ZMAX + .6))); ctx.lineTo(px(trail[k]), g.yOf(Math.min(trail[k].z, ZMAX + .6))); }
+    ctx.stroke();
+  }
+
+  // wind + gust streaks
+  const windF = cfg.wind + (sim.gustNow || 0);
+  if (Math.abs(windF) > 0.2 || sim.vx > 0.1) {
+    ctx.lineWidth = 1; ctx.lineCap = 'round';
+    for (const s of streaks) {
+      if (running && !reduceMotion) { s.y -= windF * 0.0009 * speed * dt * 60; s.x -= (sim.vx / FWD) * 0.006 * speed * dt * 60 * s.l; }
+      s.y = (s.y + 1) % 1; s.x = (s.x + 1) % 1;
+      const x = s.x * g.contentW, y = g.top + s.y * (g.bottom - g.top);
+      const lx = (sim.vx / FWD) * 26 * s.l, ly = Math.max(-40, Math.min(40, windF * 3.2 * s.l));
+      ctx.strokeStyle = hexA(C.ink, Math.min(0.28, 0.06 + Math.abs(windF) / 40 + sim.vx * 0.02));
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + lx, y + ly); ctx.stroke();
+    }
+  }
+
+  // drone geometry
   const jit = Math.sqrt(Math.max(0, sim.jitVar));
-  const shake = reduceMotion ? 0 : Math.min(3, jit * 0.5);
-  const dx = g.cx + (Math.random() - 0.5) * shake, dy = g.yOf(zVis) - 16 + (Math.random() - 0.5) * shake;
+  const vib = reduceMotion ? 0 : Math.min(3, jit * 0.45);
+  const dx = g.droneX + (Math.random() - 0.5) * vib, dy = droneY - 18 + (Math.random() - 0.5) * vib;
   const thr = sim.T / TMAX;
-  // downwash particles
-  if (running && !reduceMotion) {
-    const n = Math.round(thr * 5 * speed);
-    for (let k = 0; k < n; k++) for (const side of [-1, 1]) particles.push({ x: dx + side * 38 + (Math.random() - 0.5) * 18, y: dy + 6, vy: 2 + thr * 6 + Math.random() * 2, life: 1 });
+  const sat = sim.uu > TMAX + 0.01 || sim.uu < -0.01;
+
+  // downwash dust near the ground
+  if (running && !reduceMotion && sim.z < 2.2 && thr > 0.05) {
+    const n = Math.round(thr * (2.2 - sim.z) * 3 * speed);
+    for (let k = 0; k < n; k++) dust.push({ x: dx + (Math.random() - 0.5) * 30, y: g.bottom - 1, vx: (Math.random() < 0.5 ? -1 : 1) * (1 + Math.random() * 3.5), vy: -Math.random() * 0.8, life: 1 });
   }
-  ctx.fillStyle = C['ink-3'];
-  for (let k = particles.length - 1; k >= 0; k--) {
-    const p = particles[k];
-    if (running) { p.y += p.vy * speed; p.life -= 0.03 * speed; }
-    if (p.y > g.bottom) { p.y = g.bottom; p.x += (p.x > dx ? 1 : -1) * 2; }
-    if (p.life <= 0) { particles.splice(k, 1); continue; }
-    ctx.globalAlpha = p.life * 0.35; ctx.fillRect(p.x, p.y, 1.6, 1.6);
+  for (let k = dust.length - 1; k >= 0; k--) {
+    const p = dust[k];
+    if (p.rel) { p.x = dx; p.y = g.bottom - 2; p.rel = false; }
+    if (running) { p.x += p.vx * speed; p.y += p.vy * speed; p.vy += 0.03 * speed; p.vx *= 0.97; p.life -= 0.02 * speed; }
+    if (p.y > g.bottom) { p.y = g.bottom; p.vy *= -0.3; }
+    if (p.life <= 0) { dust.splice(k, 1); continue; }
+    ctx.fillStyle = hexA(C.horizon, p.life * 0.45);
+    ctx.fillRect(p.x, p.y, 2, 2);
   }
-  ctx.globalAlpha = 1;
-  if (particles.length > 600) particles.splice(0, particles.length - 600);
+  if (dust.length > 500) dust.splice(0, dust.length - 500);
+
   // tether rope
   if (sim.tether) {
+    const ax = g.droneX - (sim.wx - sim.tetherX) * g.scale;
     ctx.strokeStyle = C.thrust; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(dx, dy + 12);
-    ctx.quadraticCurveTo(dx + 10, (dy + g.bottom) / 2, dx, g.bottom); ctx.stroke();
-    ctx.fillStyle = C.thrust; ctx.fillRect(dx - 5, g.bottom - 4, 10, 6);
+    if (C.glowA) { ctx.shadowColor = C.thrust; ctx.shadowBlur = 8 * C.glowA; }
+    ctx.beginPath(); ctx.moveTo(dx, dy + 14);
+    ctx.quadraticCurveTo((dx + ax) / 2 + 14, (dy + g.bottom) / 2 + 10, ax, g.bottom); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = C.thrust; ctx.fillRect(ax - 5, g.bottom - 3, 10, 6);
   }
-  if (sim.grab !== null) {
-    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.arc(dx, dy, 34, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+
+  // thrust plumes
+  const S = Math.min(1.15, Math.max(0.8, h / 640));
+  const tilt = reduceMotion ? 0 : -0.07 * (sim.vx / FWD) + (Math.random() - 0.5) * vib * 0.01;
+  ctx.save(); ctx.translate(dx, dy); ctx.rotate(tilt); ctx.scale(S, S);
+  for (const side of [-1, 1]) {
+    const rx = side * 46, len = thr * 70 * (0.9 + Math.random() * 0.2);
+    if (len < 2) continue;
+    const pg = ctx.createLinearGradient(0, -4, 0, len);
+    pg.addColorStop(0, hexA(C.plume, 0.45 * (0.5 + 0.5 * C.glowA))); pg.addColorStop(1, hexA(C.plume, 0));
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.moveTo(rx - 22, -6); ctx.lineTo(rx + 22, -6); ctx.lineTo(rx + 10, len); ctx.lineTo(rx - 10, len); ctx.closePath(); ctx.fill();
   }
   // payload
   if (cfg.mass > 1.02) {
-    const s = 10 + (cfg.mass - 1) * 14;
-    ctx.strokeStyle = C['ink-3']; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(dx - 6, dy + 8); ctx.lineTo(dx - s/2 + 2, dy + 18); ctx.moveTo(dx + 6, dy + 8); ctx.lineTo(dx + s/2 - 2, dy + 18); ctx.stroke();
-    ctx.fillStyle = C.thrust; ctx.fillRect(dx - s/2, dy + 18, s, s * 0.8);
+    const sz = 12 + (cfg.mass - 1) * 16, sw = reduceMotion ? 0 : Math.sin(now / 480) * 3;
+    ctx.strokeStyle = hexA(C.ink, 0.6); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-6, 10); ctx.lineTo(sw - sz / 2 + 2, 26); ctx.moveTo(6, 10); ctx.lineTo(sw + sz / 2 - 2, 26); ctx.stroke();
+    ctx.fillStyle = C.thrust; roundRect(ctx, sw - sz / 2, 26, sz, sz * 0.8, 3); ctx.fill();
+    ctx.fillStyle = hexA('#000000', 0.18); ctx.fillRect(sw - sz / 2, 26 + sz * 0.35, sz, 3);
   }
-  // arms and body
-  ctx.fillStyle = C.drone; ctx.strokeStyle = C.drone; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(dx - 38, dy); ctx.lineTo(dx + 38, dy); ctx.stroke();
-  roundRect(ctx, dx - 16, dy - 7, 32, 14, 5); ctx.fill();
-  ctx.fillStyle = C.accent; ctx.fillRect(dx - 3, dy - 2, 6, 4);
-  // legs
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(dx - 10, dy + 7); ctx.lineTo(dx - 16, dy + 16); ctx.moveTo(dx + 10, dy + 7); ctx.lineTo(dx + 16, dy + 16); ctx.stroke();
-  // rotors
-  if (running) rotorPhase += thr * 1.4 * speed;
+  // skids
+  ctx.strokeStyle = C['drone-body']; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-12, 7); ctx.lineTo(-18, 17); ctx.moveTo(12, 7); ctx.lineTo(18, 17); ctx.moveTo(-26, 17); ctx.lineTo(26, 17); ctx.stroke();
+  // arms
+  ctx.fillStyle = C['drone-body']; roundRect(ctx, -50, -3, 100, 5, 2.5); ctx.fill();
+  // body with rim light
+  const bg = ctx.createLinearGradient(0, -11, 0, 10);
+  bg.addColorStop(0, C['drone-hi']); bg.addColorStop(0.35, C['drone-body']); bg.addColorStop(1, C['drone-body']);
+  ctx.fillStyle = bg; roundRect(ctx, -24, -11, 48, 20, 9); ctx.fill();
+  ctx.fillStyle = hexA(C.accent, 0.85); roundRect(ctx, 6, -7, 12, 5, 2.5); ctx.fill();
+  // status underglow
+  const glowCol = sat ? C.bad : analysis && analysis.state === 'bad' ? C.warn : C.p;
+  const ug = ctx.createRadialGradient(0, 10, 0, 0, 10, 26);
+  ug.addColorStop(0, hexA(glowCol, 0.55 * (0.4 + 0.6 * C.glowA))); ug.addColorStop(1, hexA(glowCol, 0));
+  ctx.fillStyle = ug; ctx.fillRect(-26, -6, 52, 36);
+  // motor pods + rotors
+  if (running) rotorPhase += (0.25 + thr * 1.6) * speed;
   for (const side of [-1, 1]) {
-    const rx = dx + side * 38;
-    ctx.fillStyle = C.drone; ctx.fillRect(rx - 2, dy - 9, 4, 9);
-    const spin = thr > 0.01;
-    const bw = spin ? 26 : 22 * Math.abs(Math.cos(rotorPhase));
-    ctx.fillStyle = spin ? C.rotor : C.drone;
-    ctx.beginPath(); ctx.ellipse(rx, dy - 10, Math.max(3, bw), spin ? 3.2 : 1.5, 0, 0, Math.PI * 2); ctx.fill();
-    // thrust flame bar under motors
-    const len = thr * 34;
-    const grad = ctx.createLinearGradient(0, dy + 2, 0, dy + 2 + len);
-    grad.addColorStop(0, C.thrust); grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad; ctx.globalAlpha = 0.55;
-    ctx.fillRect(rx - 3, dy + 3, 6, len); ctx.globalAlpha = 1;
+    const rx = side * 46;
+    ctx.fillStyle = C['drone-body']; roundRect(ctx, rx - 4, -12, 8, 12, 2); ctx.fill();
+    const spinning = thr > 0.02;
+    ctx.fillStyle = hexA(C.rotor, spinning ? 0.22 : 0.9);
+    ctx.beginPath(); ctx.ellipse(rx, -13, spinning ? 26 : 20 * Math.abs(Math.cos(rotorPhase)) + 3, spinning ? 3.2 : 1.6, 0, 0, Math.PI * 2); ctx.fill();
+    if (spinning) {
+      const bxp = Math.cos(rotorPhase * 1.7 + side) * 24;
+      ctx.strokeStyle = hexA(C.rotor, 0.55); ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(rx - bxp, -13); ctx.lineTo(rx + bxp * 0.2, -13); ctx.stroke();
+    }
   }
-  ctx.lineCap = 'butt';
-  if (sim.z > ZMAX + 0.8) {
-    ctx.fillStyle = C.bad; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText('▲ ' + sim.z.toFixed(1) + ' m (off the scale)', g.cx, 4);
+  // nav lights + strobe
+  const blink = Math.floor(now / 550) % 2;
+  const navL = [[-50, 0, C.bad], [50, 0, C.good]];
+  for (const [lx, ly, col] of navL) {
+    const hl = ctx.createRadialGradient(lx, ly, 0, lx, ly, 10);
+    hl.addColorStop(0, hexA(col, 0.8)); hl.addColorStop(1, hexA(col, 0));
+    ctx.fillStyle = hl; ctx.fillRect(lx - 10, ly - 10, 20, 20);
   }
-  // readouts
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = C.ink;
-  ctx.font = '500 12px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
-  const lines = [
-    ['ALT', sim.z.toFixed(2) + ' m'], ['VEL', (sim.v >= 0 ? '+' : '') + sim.v.toFixed(2) + ' m/s'],
-    ['THR', sim.T.toFixed(1) + ' / ' + TMAX + ' N'], ['T', sim.t.toFixed(1) + ' s'],
-  ];
-  lines.forEach(([k, v], idx) => {
-    ctx.fillStyle = C['ink-3']; ctx.fillText(k, 48, 8 + idx * 16);
-    ctx.fillStyle = C.ink; ctx.fillText(v, 80, 8 + idx * 16);
-  });
-  const sat = sim.uu > TMAX + 0.01 || sim.uu < -0.01;
-  const tags = [];
-  if (sat) tags.push(['SATURATED', C.bad]);
-  if (sim.tether) tags.push(['TETHERED', C.thrust]);
-  if (sim.grab !== null) tags.push(['HAND ON DRONE', C.ink]);
-  if (!running) tags.push(['PAUSED', C['ink-2']]);
-  tags.forEach(([txt, col], idx) => {
-    ctx.fillStyle = col; ctx.fillText(txt, 48, 76 + idx * 16);
-  });
-  if (sim.flash && performance.now() - sim.flash.t < 1600) {
-    ctx.fillStyle = C.bad; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText('HARD LANDING ' + sim.flash.s.toFixed(1) + ' m/s', g.cx, g.bottom - 4);
+  if (!reduceMotion && (now % 1300) < 70) {
+    const st = ctx.createRadialGradient(0, -11, 0, 0, -11, 30);
+    st.addColorStop(0, 'rgba(255,255,255,.95)'); st.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = st; ctx.fillRect(-30, -41, 60, 60);
   }
+  ctx.restore();
+
+  // hand-grab ring
+  if (sim.grab !== null) {
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.lineDashOffset = -now / 40;
+    ctx.beginPath(); ctx.arc(dx, dy, 44, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+  }
+  if (sim.z > ZMAX + 0.6) {
+    ctx.fillStyle = C.bad; ctx.font = `500 11px ${C.fmono}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('▲ ' + sim.z.toFixed(1) + ' m · off the scale', g.droneX, 8);
+  }
+  if (sim.flash && now - sim.flash.t < 1800) {
+    ctx.fillStyle = C.bad; ctx.font = `800 20px ${C.fdisp}`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('HARD LANDING · ' + sim.flash.s.toFixed(1) + ' m/s', g.droneX, g.bottom - 44);
+  }
+  ctx.restore();
 }
 function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
 // scene interaction
 let drag = null;
-const sceneWrap = $('sceneWrap');
-sceneWrap.addEventListener('pointerdown', ev => {
+sceneCv.addEventListener('pointerdown', ev => {
   const r = sceneCv.getBoundingClientRect();
   const x = ev.clientX - r.left, y = ev.clientY - r.top;
   const g = sceneGeom(r.width, r.height);
-  const droneY = g.yOf(Math.min(sim.z, ZMAX + 0.8)) - 16;
-  sceneWrap.setPointerCapture(ev.pointerId);
-  if (Math.abs(x - g.cx) < 52 && Math.abs(y - droneY) < 30) {
-    drag = { kind: 'drone' }; sim.grab = Math.max(0, g.zOf(y + 16));
+  if (x > g.contentW) return;
+  const droneY = g.yOf(Math.min(sim.z, ZMAX + 0.6)) - 18;
+  sceneCv.setPointerCapture(ev.pointerId);
+  if (Math.abs(x - g.droneX) < 60 && Math.abs(y - droneY) < 34) {
+    drag = { kind: 'drone' }; sim.grab = Math.max(0, g.zOf(y + 18));
   } else {
     drag = { kind: 'sp', y0: sim.z, t0: sim.t };
     setSetpoint(g.zOf(y), false);
   }
 });
-sceneWrap.addEventListener('pointermove', ev => {
-  if (!drag) return;
+sceneCv.addEventListener('pointermove', ev => {
   const r = sceneCv.getBoundingClientRect(); const g = sceneGeom(r.width, r.height);
-  const y = ev.clientY - r.top;
-  if (drag.kind === 'drone') sim.grab = Math.max(0, Math.min(ZMAX + 1, g.zOf(y + 16)));
+  const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  if (!drag) {
+    const droneY = g.yOf(Math.min(sim.z, ZMAX + 0.6)) - 18;
+    sceneCv.style.cursor = Math.abs(x - g.droneX) < 60 && Math.abs(y - droneY) < 34 ? 'grab' : 'crosshair';
+    return;
+  }
+  if (drag.kind === 'drone') { sceneCv.style.cursor = 'grabbing'; sim.grab = Math.max(0, Math.min(ZMAX + 1, g.zOf(y + 18))); }
   else setSetpoint(g.zOf(y), false);
 });
 const endDrag = () => {
@@ -775,78 +1117,102 @@ const endDrag = () => {
   else beginStep(drag.y0, sim.sp, drag.t0);
   drag = null;
 };
-sceneWrap.addEventListener('pointerup', endDrag);
-sceneWrap.addEventListener('pointercancel', endDrag);
+sceneCv.addEventListener('pointerup', endDrag);
+sceneCv.addEventListener('pointercancel', endDrag);
 
 // ---------- charts ----------
+function hatchPattern(ctx) {
+  if (hatch) return hatch;
+  const c = document.createElement('canvas'); c.width = c.height = 8;
+  const x = c.getContext('2d'); x.strokeStyle = hexA(C.bad, 0.35); x.lineWidth = 1;
+  x.beginPath(); x.moveTo(0, 8); x.lineTo(8, 0); x.stroke();
+  hatch = ctx.createPattern(c, 'repeat'); return hatch;
+}
 function chartFrame(cv, lo, hi) {
   const { ctx, w, h } = fitCanvas(cv);
-  const L = 40, R = 8, T = 26, B = 16;
-  const tNow = sim.t, t0 = Math.max(0, tNow - WINDOW), t1 = Math.max(WINDOW, tNow);
+  const L = 36, R = 12, T = 8, B = 18;
+  const t1 = Math.max(WINDOW, sim.t);
   const xOf = t => L + (t - (t1 - WINDOW)) / WINDOW * (w - L - R);
   const yOf = v => T + (hi - v) / (hi - lo) * (h - T - B);
   ctx.clearRect(0, 0, w, h);
-  return { ctx, w, h, L, R, T, B, xOf, yOf, t0, t1, lo, hi };
+  return { ctx, w, h, L, R, T, B, xOf, yOf, t1, lo, hi };
 }
-function gridY(f, ticks, unit) {
+function gridY(f, ticks) {
   const { ctx, w, L, R, yOf } = f;
-  ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
+  ctx.font = `400 9px ${C.fmono}`;
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   for (const v of ticks) {
     const y = Math.round(yOf(v)) + 0.5;
-    ctx.strokeStyle = v === 0 ? C['grid-2'] : C.grid; ctx.lineWidth = 1;
+    ctx.strokeStyle = hexA(C.ink, v === 0 ? 0.16 : 0.06); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(w - R, y); ctx.stroke();
-    ctx.fillStyle = C['ink-3']; ctx.fillText(v + unit, L - 5, y);
+    ctx.fillStyle = C['ink-3']; ctx.fillText(v, L - 6, y);
   }
-  // time ticks
-  const { t1, xOf, h } = f;
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  for (let t = Math.ceil((t1 - WINDOW) / 5) * 5; t <= t1; t += 5) {
-    const x = Math.round(xOf(t)) + 0.5;
-    ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(x, f.T); ctx.lineTo(x, h - f.B); ctx.stroke();
-    ctx.fillStyle = C['ink-3']; ctx.fillText(t + 's', x, h - 2);
+  for (let t = Math.ceil((f.t1 - WINDOW) / 5) * 5; t <= f.t1; t += 5) {
+    const x = Math.round(f.xOf(t)) + 0.5;
+    ctx.strokeStyle = hexA(C.ink, 0.05); ctx.beginPath(); ctx.moveTo(x, f.T); ctx.lineTo(x, f.h - f.B); ctx.stroke();
+    ctx.fillStyle = C['ink-3']; ctx.fillText(t + 's', x, f.h - 3);
   }
 }
-function series(f, arr, color, width = 1.5, alpha = 1, dash = null) {
-  if (recCount < 2) return;
-  const { ctx, xOf, yOf, lo, hi } = f;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(f.L, f.T - 2, f.w - f.L - f.R, f.h - f.T - f.B + 4); ctx.clip();
-  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.globalAlpha = alpha; ctx.lineJoin = 'round';
-  if (dash) ctx.setLineDash(dash);
-  ctx.beginPath();
+// min/max decimation per pixel column: keeps one-sample spikes visible
+function buildPath(f, arr) {
+  const path = new Path2D();
+  if (recCount < 2) return { path, lastX: 0, lastY: 0, firstX: 0 };
   const start = (recHead - recCount + NREC) % NREC;
-  const pad = (hi - lo) * 0.05;
+  const pad = (f.hi - f.lo) * 0.06, clamp = v => Math.max(f.lo - pad, Math.min(f.hi + pad, v));
+  let col = null, mn = 0, mx = 0, first = true, lastX = 0, lastY = 0, firstX = 0;
+  const flush = () => { if (col === null) return; const a = f.yOf(mn), b = f.yOf(mx); if (first) { path.moveTo(col, a); firstX = col; first = false; } else path.lineTo(col, a); if (b !== a) path.lineTo(col, b); };
   for (let k = 0; k < recCount; k++) {
     const idx = (start + k) % NREC;
-    const v = Math.max(lo - pad, Math.min(hi + pad, arr[idx]));
-    const x = xOf(rec.t[idx]), y = yOf(v);
-    k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    const x = Math.round(f.xOf(rec.t[idx])), v = clamp(arr[idx]);
+    if (x !== col) { flush(); col = x; mn = mx = v; } else { if (v < mn) mn = v; if (v > mx) mx = v; }
+    lastX = x; lastY = f.yOf(v);
   }
-  ctx.stroke(); ctx.restore();
+  flush(); path.lineTo(lastX, lastY);
+  return { path, lastX, lastY, firstX };
+}
+function stroke(f, arr, color, width = 1.6, { alpha = 1, dash = null, glow = true, fill = false, dot = false } = {}) {
+  const { ctx } = f;
+  const { path, lastX, lastY, firstX } = buildPath(f, arr);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(f.L, f.T - 3, f.w - f.L - f.R + 4, f.h - f.T - f.B + 6); ctx.clip();
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (fill && recCount > 1) {
+    const fp = new Path2D(path); fp.lineTo(lastX, f.h - f.B); fp.lineTo(firstX, f.h - f.B); fp.closePath();
+    const gr = ctx.createLinearGradient(0, f.T, 0, f.h - f.B);
+    gr.addColorStop(0, hexA(color, 0.28)); gr.addColorStop(1, hexA(color, 0));
+    ctx.fillStyle = gr; ctx.fill(fp);
+  }
+  if (dash) ctx.setLineDash(dash);
+  if (glow && C.glowA > 0) { ctx.strokeStyle = hexA(color, 0.16 * C.glowA * alpha); ctx.lineWidth = width + 5; ctx.stroke(path); }
+  ctx.strokeStyle = hexA(color, alpha); ctx.lineWidth = width; ctx.stroke(path);
+  ctx.restore();
+  if (dot && recCount > 1) {
+    const pulse = reduceMotion ? 0.5 : (performance.now() / 1200) % 1;
+    ctx.fillStyle = hexA(color, 0.35 * (1 - pulse)); ctx.beginPath(); ctx.arc(lastX, lastY, 3 + pulse * 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(lastX, lastY, 3, 0, Math.PI * 2); ctx.fill();
+  }
 }
 let pidRange = [-20, 30];
 function drawCharts() {
-  // altitude
   let f = chartFrame($('chAlt'), 0, ZMAX);
-  gridY(f, [0, 2.5, 5, 7.5, 10], '');
-  if (cfg.noise > 0.004 || cfg.delay > 0) series(f, rec.meas, C['ink-3'], 1, 0.45);
-  series(f, rec.sp, C['ink-3'], 1.4, 1, [5, 4]);
-  series(f, rec.z, C.accent, 2);
-  // thrust
+  gridY(f, [0, 5, 10]);
+  if (cfg.noise > 0.004 || cfg.delay > 0) stroke(f, rec.meas, C['ink-3'], 1, { alpha: 0.5, glow: false });
+  stroke(f, rec.sp, C.sunset, 1.4, { dash: [5, 5], glow: false });
+  stroke(f, rec.z, C.accent, 2, { fill: true, dot: true });
+
   f = chartFrame($('chThr'), -10, 35);
-  f.ctx.fillStyle = C.sat;
+  f.ctx.fillStyle = hatchPattern(f.ctx);
   f.ctx.fillRect(f.L, f.yOf(35), f.w - f.L - f.R, f.yOf(TMAX) - f.yOf(35));
   f.ctx.fillRect(f.L, f.yOf(0), f.w - f.L - f.R, f.yOf(-10) - f.yOf(0));
-  gridY(f, [0, 10, 20, 25], '');
-  f.ctx.fillStyle = C.bad; f.ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
-  f.ctx.textAlign = 'right'; f.ctx.textBaseline = 'bottom'; f.ctx.globalAlpha = 0.8;
-  f.ctx.fillText('motor limit', f.w - f.R - 4, f.yOf(TMAX) - 2); f.ctx.globalAlpha = 1;
+  gridY(f, [0, 10, 25]);
+  f.ctx.fillStyle = C.bad; f.ctx.font = `400 8.5px ${C.fmono}`; f.ctx.textAlign = 'right'; f.ctx.textBaseline = 'bottom';
+  f.ctx.fillText('MOTOR LIMIT', f.w - f.R - 2, f.yOf(TMAX) - 2);
   const hov = cfg.mass * G;
-  f.ctx.strokeStyle = C['ink-3']; f.ctx.setLineDash([4, 4]); f.ctx.beginPath(); f.ctx.moveTo(f.L, f.yOf(hov)); f.ctx.lineTo(f.w - f.R, f.yOf(hov)); f.ctx.stroke(); f.ctx.setLineDash([]);
-  series(f, rec.uu, C.thrust, 1.2, 0.4);
-  series(f, rec.T, C.thrust, 2);
-  // terms, auto-range
+  f.ctx.strokeStyle = hexA(C.ink, 0.35); f.ctx.setLineDash([3, 4]); f.ctx.beginPath(); f.ctx.moveTo(f.L, f.yOf(hov)); f.ctx.lineTo(f.w - f.R, f.yOf(hov)); f.ctx.stroke(); f.ctx.setLineDash([]);
+  stroke(f, rec.uu, C.thrust, 1.1, { alpha: 0.35, glow: false });
+  stroke(f, rec.T, C.thrust, 2, { dot: true });
+
   let lo = 0, hi = 0;
   const start = (recHead - recCount + NREC) % NREC;
   for (let k = 0; k < recCount; k += 2) {
@@ -854,86 +1220,133 @@ function drawCharts() {
     for (const a of [rec.p, rec.i, rec.d]) { const v = a[idx]; if (v < lo) lo = v; if (v > hi) hi = v; }
   }
   lo = Math.max(-120, Math.min(-5, lo * 1.1)); hi = Math.min(150, Math.max(15, hi * 1.1));
-  pidRange[0] += (lo - pidRange[0]) * 0.15; pidRange[1] += (hi - pidRange[1]) * 0.15;
+  pidRange[0] += (lo - pidRange[0]) * 0.12; pidRange[1] += (hi - pidRange[1]) * 0.12;
   f = chartFrame($('chPid'), pidRange[0], pidRange[1]);
   const span = pidRange[1] - pidRange[0];
-  const stepT = span > 150 ? 50 : span > 60 ? 20 : 10;
+  const stepT = span > 150 ? 50 : span > 60 ? 25 : 10;
   const ticks = []; for (let v = Math.ceil(pidRange[0] / stepT) * stepT; v <= pidRange[1]; v += stepT) ticks.push(v);
-  gridY(f, ticks, '');
-  series(f, rec.p, C.p, 1.5);
-  series(f, rec.d, C.d, 1.5);
-  series(f, rec.i, C.i, 2);
+  gridY(f, ticks);
+  stroke(f, rec.p, C.p, 1.5);
+  stroke(f, rec.d, C.d, 1.5);
+  stroke(f, rec.i, C.i, 2.2, { dot: true });
 }
 
-// ---------- pole map ----------
-function drawPoles() {
+// ---------- pole map (animated) ----------
+let dispPoles = [], dispR = 6;
+function matchPoles(ps) {
+  if (dispPoles.length !== ps.length) { dispPoles = ps.map(p => p.slice()); return; }
+  const used = new Set(), next = [];
+  // keep display order stable: each displayed pole glides to its nearest new pole
+  const targets = ps.map(p => p.slice());
+  for (const d of dispPoles) {
+    let best = -1, bd = Infinity;
+    targets.forEach((t, k) => { if (used.has(k)) return; const dd = Math.hypot(t[0] - d[0], t[1] - d[1]); if (dd < bd) { bd = dd; best = k; } });
+    used.add(best); d.target = targets[best]; next.push(d);
+  }
+  dispPoles = next;
+}
+function drawPoles(dt) {
   if (!analysis) return;
+  const k = reduceMotion ? 1 : 1 - Math.exp(-dt * 9);
+  for (const d of dispPoles) { const t = d.target || d; d[0] += (t[0] - d[0]) * k; d[1] += (t[1] - d[1]) * k; }
   const cv = $('poles');
   const { ctx, w, h } = fitCanvas(cv);
   ctx.clearRect(0, 0, w, h);
   const near = analysis.ps.filter(p => Math.hypot(p[0], p[1]) < 25);
-  let R = Math.max(4, ...near.map(p => Math.max(Math.abs(p[0]) * 1.2, Math.abs(p[1]) * 1.35)));
+  let R = Math.max(4, ...near.map(p => Math.max(Math.abs(p[0]) * 1.2, Math.abs(p[1]) * 2.1 * (w / h))));
   R = Math.min(R, 18);
-  const xmin = -R, xmax = R * 0.45;
-  const sx = w / (xmax - xmin);
-  const yr = (h / 2) / sx;
+  dispR += (R - dispR) * k;
+  const xmin = -dispR, xmax = dispR * 0.45;
+  const sx = w / (xmax - xmin), yr = (h / 2) / sx;
   const X = x => (x - xmin) * sx, Y = y => h / 2 - y * sx;
   // unstable half plane
-  ctx.fillStyle = C.sat; ctx.fillRect(X(0), 0, w - X(0), h);
-  // damping guide ζ = 0.7 wedge
-  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
-  for (let x = Math.ceil(xmin); x <= xmax; x++) { ctx.beginPath(); ctx.moveTo(X(x) + .5, 0); ctx.lineTo(X(x) + .5, h); ctx.stroke(); }
-  for (let y = -Math.floor(yr); y <= yr; y++) { ctx.beginPath(); ctx.moveTo(0, Y(y) + .5); ctx.lineTo(w, Y(y) + .5); ctx.stroke(); }
-  ctx.strokeStyle = C.good; ctx.globalAlpha = 0.5; ctx.setLineDash([3, 4]);
+  const ug = ctx.createLinearGradient(X(0), 0, w, 0);
+  ug.addColorStop(0, hexA(C.bad, 0.16)); ug.addColorStop(1, hexA(C.bad, 0.04));
+  ctx.fillStyle = ug; ctx.fillRect(X(0), 0, w - X(0), h);
+  // grid
+  ctx.strokeStyle = hexA(C.ink, 0.05); ctx.lineWidth = 1;
+  const gs = dispR > 10 ? 2 : 1;
+  for (let x = Math.ceil(xmin / gs) * gs; x <= xmax; x += gs) { ctx.beginPath(); ctx.moveTo(X(x) + .5, 0); ctx.lineTo(X(x) + .5, h); ctx.stroke(); }
+  for (let y = -Math.floor(yr / gs) * gs; y <= yr; y += gs) { ctx.beginPath(); ctx.moveTo(0, Y(y) + .5); ctx.lineTo(w, Y(y) + .5); ctx.stroke(); }
+  // ζ = 0.7 wedge
   const th = Math.acos(0.7);
-  for (const s of [1, -1]) { ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(-R * 2), Y(s * R * 2 * Math.tan(th))); ctx.stroke(); }
-  ctx.setLineDash([]); ctx.globalAlpha = 1;
-  ctx.strokeStyle = C['grid-2'];
+  ctx.fillStyle = hexA(C.good, 0.06);
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(-dispR * 3), Y(dispR * 3 * Math.tan(th))); ctx.lineTo(X(-dispR * 3), Y(-dispR * 3 * Math.tan(th))); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = hexA(C.good, 0.5); ctx.setLineDash([3, 4]);
+  for (const s of [1, -1]) { ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(-dispR * 3), Y(s * dispR * 3 * Math.tan(th))); ctx.stroke(); }
+  ctx.setLineDash([]);
+  ctx.strokeStyle = hexA(C.ink, 0.2);
   ctx.beginPath(); ctx.moveTo(0, Y(0) + .5); ctx.lineTo(w, Y(0) + .5); ctx.moveTo(X(0) + .5, 0); ctx.lineTo(X(0) + .5, h); ctx.stroke();
-  const mono = getComputedStyle(document.body).getPropertyValue('--f-mono');
-  ctx.font = '10px ' + mono; ctx.fillStyle = C['ink-3'];
-  ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('unstable', w - 4, 4);
-  ctx.textAlign = 'left'; ctx.fillText('stable', 4, 4);
-  ctx.fillStyle = C.good; ctx.textBaseline = 'bottom'; ctx.fillText('ζ = 0.7', 4, h - 4);
-  ctx.fillStyle = C['ink-3']; ctx.textAlign = 'right'; ctx.fillText('Re  (1/s)', w - 4, h - 4);
+  ctx.font = `400 8.5px ${C.fmono}`; ctx.fillStyle = C['ink-3'];
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = hexA(C.bad, 0.9); ctx.fillText('UNSTABLE', w - 6, 6);
+  ctx.textAlign = 'left'; ctx.fillStyle = C['ink-3']; ctx.fillText('STABLE', 6, 6);
+  ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('Re (1/s)', w - 6, h - 5);
   // locus
-  for (const [re, im, k] of analysis.locus) {
+  for (const [re, im, kk] of analysis.locus) {
     if (re < xmin || re > xmax || Math.abs(im) > yr) continue;
-    ctx.fillStyle = C.p; ctx.globalAlpha = 0.12 + 0.3 * k;
+    ctx.fillStyle = hexA(C.p, 0.1 + 0.35 * kk);
     ctx.fillRect(X(re) - 1, Y(im) - 1, 2, 2);
   }
-  ctx.globalAlpha = 1;
   // poles
-  for (const [re, im] of analysis.ps) {
+  const now = performance.now();
+  for (const p of dispPoles) {
+    const [re, im] = p;
     let x = X(re), y = Y(im);
     const off = re < xmin || re > xmax || Math.abs(im) > yr;
     const col = re > 1e-3 ? C.bad : re > -0.05 ? C.warn : C.ink;
-    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
     if (off) {
       x = Math.max(8, Math.min(w - 8, x)); y = Math.max(8, Math.min(h - 8, y));
-      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x - 5, y); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.globalAlpha = 0.5; ctx.fill(); ctx.globalAlpha = 1;
-    } else {
-      ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
+      ctx.fillStyle = hexA(col, 0.45);
+      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x - 5, y); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.fill();
+      continue;
     }
+    if (C.glowA > 0 || re > 1e-3) {
+      const pr = re > 1e-3 && !reduceMotion ? 12 + 5 * Math.sin(now / 150) : 12;
+      const hg = ctx.createRadialGradient(x, y, 0, x, y, pr);
+      hg.addColorStop(0, hexA(col, 0.45)); hg.addColorStop(1, hexA(col, 0));
+      ctx.fillStyle = hg; ctx.fillRect(x - pr, y - pr, pr * 2, pr * 2);
+    }
+    ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
   }
 }
 
-// ---------- metrics ----------
+// ---------- HUD & metrics ----------
+let lastTags = '';
+function updateHUD() {
+  $('hAlt').textContent = sim.z.toFixed(2);
+  $('hVel').textContent = (sim.v >= 0 ? '+' : '') + sim.v.toFixed(2);
+  $('hT').textContent = sim.t.toFixed(1);
+  $('hThr').style.width = (sim.T / TMAX * 100).toFixed(1) + '%';
+  $('hHover').style.left = (cfg.mass * G / TMAX * 100).toFixed(1) + '%';
+  $('hThrN').textContent = sim.T.toFixed(1) + ' N';
+  const tags = [];
+  if (sim.uu > TMAX + 0.01 || sim.uu < -0.01) tags.push(['bad', 'SATURATED']);
+  if (sim.tether) tags.push(['warn', 'TETHERED']);
+  if (sim.grab !== null) tags.push(['info', 'HAND ON DRONE']);
+  if (!running) tags.push(['info', 'PAUSED']);
+  if (sim.script.length) tags.push(['info', 'SCRIPTED FLIGHT']);
+  const key = tags.map(t => t[1]).join();
+  if (key !== lastTags) { lastTags = key; $('hTags').innerHTML = tags.map(([c, t]) => `<span class="tag ${c}">${t}</span>`).join(''); }
+}
 function updateMetrics() {
-  const set = (id, txt, cls = '') => { const el = $(id); el.textContent = txt; el.className = 'v ' + cls; };
+  const set = (id, txt, cls = '') => { const el = $(id); if (el.textContent !== txt) el.textContent = txt; el.className = 'v ' + cls; };
   if (step && Math.abs(step.r - step.y0) >= 0.2) {
     const os = Math.max(0, step.maxProg - 1) * 100;
     set('mOS', os.toFixed(1) + '%', os > 20 ? 'bad' : os > 5 ? 'warn' : 'good');
-    set('mRise', step.t90 !== null && step.t10 !== null ? (step.t90 - step.t10).toFixed(2) + ' s' : '…');
+    set('mRise', step.t90 !== null && step.t10 !== null ? (step.t90 - step.t10).toFixed(2) + 's' : '…');
     const settled = sim.t - step.lastOut > 0.3;
     const ts = step.lastOut - step.t0;
-    set('mSettle', settled ? ts.toFixed(2) + ' s' : '…', settled ? (ts > 8 ? 'warn' : 'good') : '');
+    set('mSettle', settled ? ts.toFixed(2) + 's' : '…', settled ? (ts > 8 ? 'warn' : 'good') : '');
   } else { set('mOS', '—'); set('mRise', '—'); set('mSettle', '—'); }
   const err = sim.sp - sim.z;
-  set('mErr', (err >= 0 ? '+' : '') + err.toFixed(2) + ' m', Math.abs(err) > 0.5 ? 'warn' : '');
+  set('mErr', (err >= 0 ? '+' : '') + err.toFixed(2) + 'm', Math.abs(err) > 0.5 ? 'warn' : '');
   const jit = Math.sqrt(Math.max(0, sim.jitVar));
-  set('mJit', jit.toFixed(2) + ' N', jit > 2 ? 'bad' : jit > 0.7 ? 'warn' : '');
+  set('mJit', jit.toFixed(2) + 'N', jit > 2 ? 'bad' : jit > 0.7 ? 'warn' : '');
+  $('lvZ').textContent = sim.z.toFixed(2) + ' m'; $('lvT').textContent = sim.T.toFixed(1) + ' N';
   $('lvP').textContent = sim.Pt.toFixed(1); $('lvI').textContent = sim.I.toFixed(1); $('lvD').textContent = sim.Dt.toFixed(1);
+  // knob activity rings: each term's push relative to the motor limit
+  setActivity('kp', Math.abs(sim.Pt)); setActivity('ki', Math.abs(sim.I)); setActivity('kd', Math.abs(sim.Dt));
   if (typeof lessonTick === 'function') lessonTick();
 }
 
@@ -977,15 +1390,87 @@ function frame(now) {
   }
   drawScene(dt);
   drawCharts();
+  drawPoles(dt);
   metricAcc += dt;
-  if (metricAcc > 0.1) { metricAcc = 0; updateMetrics(); }
+  if (metricAcc > 0.08) { metricAcc = 0; updateMetrics(); updateHUD(); }
   updateSound();
   requestAnimationFrame(frame);
 }
 
+// ---------- knobs ----------
+const KNOBS = {
+  kp: { min: 0, max: 30, step: 0.1, dec: 1, name: 'K<sub>p</sub>', sub: 'proportional', unit: 'N/m' },
+  ki: { min: 0, max: 30, step: 0.1, dec: 1, name: 'K<sub>i</sub>', sub: 'integral', unit: 'N/(m·s)' },
+  kd: { min: 0, max: 15, step: 0.05, dec: 2, name: 'K<sub>d</sub>', sub: 'derivative', unit: 'N·s/m' },
+};
+const ARC = 'M 27.47 92.53 A 46 46 0 1 1 92.53 92.53';
+const ARC_IN = 'M 34.54 85.46 A 36 36 0 1 1 85.46 85.46';
+function buildKnobs() {
+  const box = $('knobs');
+  for (const [k, s] of Object.entries(KNOBS)) {
+    let ticks = '';
+    for (let n = 0; n <= 10; n++) {
+      const a = (135 + n * 27) * Math.PI / 180;
+      ticks += `<line class="tick" x1="${60 + 53 * Math.cos(a)}" y1="${60 + 53 * Math.sin(a)}" x2="${60 + (n % 5 ? 56 : 58) * Math.cos(a)}" y2="${60 + (n % 5 ? 56 : 58) * Math.sin(a)}"/>`;
+    }
+    const el = document.createElement('div');
+    el.className = 'knob ' + k;
+    el.innerHTML = `<div class="dial" role="slider" tabindex="0" aria-label="${s.sub} gain" aria-valuemin="${s.min}" aria-valuemax="${s.max}" id="${k}Dial">
+        <svg viewBox="0 0 120 120" aria-hidden="true">${ticks}
+          <circle class="cap" cx="60" cy="60" r="29"/>
+          <path class="track" d="${ARC}"/>
+          <path class="arc" d="${ARC}" pathLength="100" style="stroke-dasharray:0 100"/>
+          <path class="act" d="${ARC_IN}" pathLength="100" style="stroke-dasharray:0 100"/>
+          <g class="dot"><circle cx="60" cy="14" r="5"/></g>
+        </svg>
+        <div class="val"><input id="${k}In" inputmode="decimal" aria-label="${s.sub} gain value" autocomplete="off"><span>${s.unit}</span></div>
+      </div>
+      <div class="name">${s.name}</div><div class="sub">${s.sub}</div>`;
+    box.appendChild(el);
+    const dial = el.querySelector('.dial'), input = el.querySelector('input');
+    let startY = 0, startX = 0, startV = 0;
+    dial.addEventListener('pointerdown', ev => {
+      if (ev.target === input) return;
+      ev.preventDefault(); dial.focus();
+      dial.setPointerCapture(ev.pointerId);
+      startY = ev.clientY; startX = ev.clientX; startV = cfg[k]; el.classList.add('dragging');
+    });
+    dial.addEventListener('pointermove', ev => {
+      if (!el.classList.contains('dragging')) return;
+      const d = (startY - ev.clientY) + (ev.clientX - startX);
+      setParam(k, startV + d * (s.max - s.min) / 240 * (ev.shiftKey ? 0.2 : 1));
+    });
+    const stop = () => el.classList.remove('dragging');
+    dial.addEventListener('pointerup', stop); dial.addEventListener('pointercancel', stop);
+    dial.addEventListener('wheel', ev => { ev.preventDefault(); el.classList.add('dragging'); setParam(k, cfg[k] - Math.sign(ev.deltaY) * s.step * (ev.shiftKey ? 1 : 5)); clearTimeout(el._wt); el._wt = setTimeout(stop, 120); }, { passive: false });
+    dial.addEventListener('keydown', ev => {
+      if (ev.target === input) return;
+      const big = (s.max - s.min) / 20;
+      const map = { ArrowUp: s.step * 5, ArrowRight: s.step * 5, ArrowDown: -s.step * 5, ArrowLeft: -s.step * 5, PageUp: big, PageDown: -big };
+      if (ev.key in map) { ev.preventDefault(); setParam(k, cfg[k] + map[ev.key] * (ev.shiftKey ? 0.2 : 1)); }
+      else if (ev.key === 'Home') { ev.preventDefault(); setParam(k, s.min); }
+      else if (ev.key === 'End') { ev.preventDefault(); setParam(k, s.max); }
+    });
+    input.addEventListener('change', () => { const v = parseFloat(input.value.replace(',', '.')); if (isFinite(v)) setParam(k, v); else renderKnob(k); });
+    input.addEventListener('keydown', ev => { if (ev.key === 'Enter') input.blur(); });
+  }
+}
+function renderKnob(k) {
+  const s = KNOBS[k], v = cfg[k], pct = (v - s.min) / (s.max - s.min);
+  const dial = $(k + 'Dial');
+  dial.querySelector('.arc').style.strokeDasharray = `${(pct * 100).toFixed(2)} 100`;
+  dial.querySelector('.dot').style.transform = `rotate(${(-135 + pct * 270).toFixed(2)}deg)`;
+  dial.querySelector('.dot').style.transformOrigin = '60px 60px';
+  dial.setAttribute('aria-valuenow', v); dial.setAttribute('aria-valuetext', v.toFixed(s.dec));
+  const input = $(k + 'In'); if (document.activeElement !== input) input.value = v.toFixed(s.dec);
+}
+function setActivity(k, mag) {
+  const pct = Math.min(1, mag / TMAX) * 100;
+  $(k + 'Dial').querySelector('.act').style.strokeDasharray = `${pct.toFixed(1)} 100`;
+}
+
 // ---------- controls binding ----------
 const sliders = {
-  kp: v => v.toFixed(1), ki: v => v.toFixed(1), kd: v => v.toFixed(2),
   tf: v => v === 0 ? 'off' : (v * 1000).toFixed(0) + ' ms',
   noise: v => (v * 100).toFixed(1) + ' cm', delay: v => (v * 1000).toFixed(0) + ' ms',
   mass: v => v.toFixed(2) + ' kg', wind: v => (v > 0 ? '+' : '') + v.toFixed(1) + ' N',
@@ -993,12 +1478,31 @@ const sliders = {
 const analysisKeys = new Set(['kp', 'ki', 'kd', 'tf', 'delay', 'mass']);
 let analyzePending = false;
 function scheduleAnalyze() { if (analyzePending) return; analyzePending = true; requestAnimationFrame(() => { analyzePending = false; analyze(); }); }
-for (const k of Object.keys(sliders)) {
-  $(k).addEventListener('input', () => {
-    cfg[k] = parseFloat($(k).value);
-    $(k + 'O').textContent = sliders[k](cfg[k]);
-    if (analysisKeys.has(k)) scheduleAnalyze();
-  });
+function paintSlider(k) {
+  const el = $(k); el.value = cfg[k];
+  el.style.setProperty('--fill', ((cfg[k] - el.min) / (el.max - el.min) * 100) + '%');
+  $(k + 'O').textContent = sliders[k](cfg[k]);
+}
+function setParam(k, v) {
+  if (KNOBS[k]) {
+    const s = KNOBS[k];
+    v = Math.max(s.min, Math.min(s.max, Math.round(v / s.step) * s.step));
+    cfg[k] = +v.toFixed(s.dec + 1);
+    renderKnob(k);
+  } else { cfg[k] = v; paintSlider(k); }
+  if (analysisKeys.has(k)) scheduleAnalyze();
+}
+for (const k of Object.keys(sliders)) $(k).addEventListener('input', () => setParam(k, parseFloat($(k).value)));
+function placeInd(seg) {
+  const b = seg.querySelector('button[aria-pressed="true"]'), ind = seg.querySelector('.ind');
+  if (!b || !ind) return;
+  ind.style.width = b.offsetWidth + 'px';
+  ind.style.transform = `translateX(${b.offsetLeft}px)`;
+}
+function markSeg(id, v) {
+  const seg = $(id);
+  seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
+  placeInd(seg);
 }
 function segBind(id, key, parse = v => v, after) {
   $(id).addEventListener('click', ev => {
@@ -1015,17 +1519,16 @@ $('ff').addEventListener('change', () => {
   if (was !== cfg.ff) sim.I += (was ? 1 : -1) * M_NOM * G;
 });
 function syncUI() {
-  for (const k of Object.keys(sliders)) { $(k).value = cfg[k]; $(k + 'O').textContent = sliders[k](cfg[k]); }
-  const mark = (id, v) => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v))));
-  mark('dSeg', cfg.dsrc); mark('awSeg', cfg.aw); mark('rateSeg', cfg.rate);
+  for (const k of Object.keys(KNOBS)) renderKnob(k);
+  for (const k of Object.keys(sliders)) paintSlider(k);
+  markSeg('dSeg', cfg.dsrc); markSeg('awSeg', cfg.aw); markSeg('rateSeg', cfg.rate);
   $('ff').checked = cfg.ff;
 }
 $('zeroI').onclick = () => { sim.I = 0; };
-$('playBtn').onclick = () => { running = !running; $('playBtn').textContent = running ? 'Pause' : 'Play'; $('playBtn').setAttribute('aria-pressed', String(!running)); last = performance.now(); };
+$('playBtn').onclick = () => { running = !running; $('playBtn').textContent = running ? '❚❚ Pause' : '▶ Play'; $('playBtn').setAttribute('aria-pressed', String(!running)); last = performance.now(); };
 $('speedSeg').addEventListener('click', ev => {
   const b = ev.target.closest('button'); if (!b) return;
-  speed = parseFloat(b.dataset.s);
-  $('speedSeg').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  speed = parseFloat(b.dataset.v); markSeg('speedSeg', b.dataset.v);
 });
 $('resetBtn').onclick = () => resetSim({ z: 0, sp: sim.sp });
 $('soundBtn').onclick = toggleSound;
@@ -1034,7 +1537,7 @@ function gust(F) { sim.gusts.push({ t0: sim.t, dur: 0.6, F }); }
 $('gustDown').onclick = () => gust(-22);
 $('gustUp').onclick = () => gust(18);
 function setTetherUI(on) { $('tetherBtn').setAttribute('aria-pressed', String(on)); $('tetherBtn').textContent = on ? 'Release tether' : 'Tether to ground'; }
-function setTether(on) { sim.tether = on; setTetherUI(on); }
+function setTether(on) { sim.tether = on; if (on) sim.tetherX = sim.wx; setTetherUI(on); }
 $('tetherBtn').onclick = () => setTether(!sim.tether);
 
 // ---------- lessons ----------
@@ -1043,37 +1546,38 @@ const loopSVG = `
  <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0 0 L8 4 L0 8 z"/></marker></defs>
  <text x="2" y="34">target r</text>
  <line class="ln" x1="8" y1="44" x2="42" y2="44" marker-end="url(#ah)"/>
- <circle class="bx" cx="52" cy="44" r="9"/><text x="47" y="48" class="t-strong">Σ</text>
- <text x="62" y="36">e</text>
+ <circle class="bx" cx="52" cy="44" r="9"/><text x="48" y="48" class="t-strong">Σ</text>
+ <text x="64" y="37">e</text>
  <line class="ln" x1="61" y1="44" x2="84" y2="44" marker-end="url(#ah)"/>
- <rect class="bx hi" x="86" y="30" width="54" height="28" rx="4"/><text x="102" y="48" class="t-strong">PID</text>
- <line class="ln" x1="140" y1="44" x2="160" y2="44" marker-end="url(#ah)"/><text x="143" y="38">u</text>
- <rect class="bx" x="162" y="30" width="58" height="28" rx="4"/><text x="170" y="48">motors</text>
- <line class="ln" x1="220" y1="44" x2="240" y2="44" marker-end="url(#ah)"/><text x="223" y="38">T</text>
- <rect class="bx" x="242" y="30" width="56" height="28" rx="4"/><text x="252" y="48">drone</text>
+ <rect class="bx hi" x="86" y="30" width="54" height="28" rx="6"/><text x="103" y="48" class="t-strong">PID</text>
+ <line class="ln" x1="140" y1="44" x2="160" y2="44" marker-end="url(#ah)"/><text x="145" y="38">u</text>
+ <rect class="bx" x="162" y="30" width="58" height="28" rx="6"/><text x="170" y="48">motors</text>
+ <line class="ln" x1="220" y1="44" x2="240" y2="44" marker-end="url(#ah)"/><text x="226" y="38">T</text>
+ <rect class="bx" x="242" y="30" width="56" height="28" rx="6"/><text x="253" y="48">drone</text>
  <line class="ln" x1="298" y1="44" x2="312" y2="44"/><line class="ln" x1="312" y1="44" x2="312" y2="94"/>
- <line class="ln" x1="312" y1="94" x2="226" y2="94" marker-end="url(#ah)"/><text x="290" y="88">z</text>
- <rect class="bx" x="162" y="80" width="62" height="28" rx="4"/><text x="170" y="98">sensor</text>
+ <line class="ln" x1="312" y1="94" x2="226" y2="94" marker-end="url(#ah)"/><text x="292" y="88">z</text>
+ <rect class="bx" x="162" y="80" width="62" height="28" rx="6"/><text x="171" y="98">sensor</text>
  <line class="ln" x1="162" y1="94" x2="52" y2="94"/><line class="ln" x1="52" y1="94" x2="52" y2="55" marker-end="url(#ah)"/>
- <text x="58" y="88">y (noisy, late)</text><text x="40" y="70">−</text>
- <text x="170" y="22">wind, payload</text><line class="ln" x1="270" y1="18" x2="270" y2="28" marker-end="url(#ah)"/><line class="ln" x1="232" y1="18" x2="270" y2="18"/>
+ <path class="flow" d="M8 44 H 42 M61 44 H 84 M140 44 H 160 M220 44 H 240 M298 44 H 312 V 94 H 226 M162 94 H 52 V 55"/>
+ <text x="60" y="88">y (noisy, late)</text><text x="40" y="70">−</text>
+ <text x="170" y="20">wind, payload</text><line class="ln" x1="270" y1="16" x2="270" y2="28" marker-end="url(#ah)"/><line class="ln" x1="236" y1="16" x2="270" y2="16"/>
 </svg>`;
 
 const L = [];
 L.push({ title: 'The control loop', preset: { start: { z: 0, sp: 4 } },
-  html: `<p>The drone hangs from four propellers that can push at most <b>25 N</b>. It weighs 1 kg, so it needs <b>9.81 N</b> just to hover. An altimeter measures its height and a PID controller decides the thrust <em>u</em> many times per second.</p>
+  html: `<p>The drone hangs from propellers that can push at most <b>25 N</b>. It weighs 1 kg, so it needs <b>9.81 N</b> just to hover. An altimeter measures its height, and a PID controller decides the thrust <em>u</em> many times per second.</p>
   ${loopSVG}
   <p>The controller only sees the <b>error</b> <code>e = target − measured altitude</code>. Each term reacts to a different view of it:</p>
   <ul><li><b style="color:var(--p)">P</b> reacts to the error now.</li><li><b style="color:var(--i)">I</b> reacts to the error accumulated over time.</li><li><b style="color:var(--d)">D</b> reacts to how fast the error is changing.</li></ul>
-  <div class="try"><h3>Try it</h3><ul><li>Click higher in the sky to move the target. Watch the thrust and the three terms respond.</li><li>Drag the drone down by hand and let go.</li><li>The lessons after this one each break the tuning on purpose so you can see what happens.</li></ul></div>
-  <p class="note">This setup is well tuned: K<sub>p</sub>=8, K<sub>i</sub>=4, K<sub>d</sub>=4. Use <b>Load this setup</b> any time to get back to it.</p>` });
+  <div class="try"><h3>Try it</h3><ul><li>Click higher in the sky to move the coral target line. The blue contrail behind the drone is its altitude history.</li><li>Grab the drone, pull it down, and let go.</li><li>Turn the gain knobs below: drag, scroll, or type a value.</li></ul></div>
+  <p class="note">This setup is well tuned: K<sub>p</sub>=8, K<sub>i</sub>=4, K<sub>d</sub>=4. Press <b>Fly this setup</b> any time to get back to it.</p>` });
 
 L.push({ title: 'P only: the spring', preset: { kp: 4, ki: 0, kd: 0, tf: 0, start: { z: 0, sp: 5 } },
   html: `<p>A pure P controller acts like a spring pulling the drone toward the target: thrust = K<sub>p</sub> × error.</p>
   <p>Two problems appear right away:</p>
   <ol><li><b>Steady-state error (droop).</b> To produce 9.81 N of hover thrust, P needs a nonzero error: <code>e = m·g / K<sub>p</sub></code>. At K<sub>p</sub>=4 the drone hangs about <b>2.45 m</b> below the target.</li>
   <li><b>Oscillation.</b> A spring with a mass and little friction bounces. Nothing here slows the drone down except air drag.</li></ol>
-  <div class="try"><h3>Try it</h3><ul><li>Raise K<sub>p</sub> to 10. The droop shrinks to ~1 m, but the bouncing never dies out.</li><li>Go to 12 and the oscillation <em>grows</em>. Watch the pole map: two poles cross into the red half-plane.</li><li>Lower K<sub>p</sub> to 2. It barely leaves the ground.</li></ul></div>
+  <div class="try"><h3>Try it</h3><ul><li>Raise K<sub>p</sub> to 10. The droop shrinks to ~1 m, but the contrail keeps waving.</li><li>Go to 12 and the oscillation <em>grows</em>. Two poles cross into the red half-plane and the stage starts to pulse.</li><li>Lower K<sub>p</sub> to 2. It barely leaves the pad.</li></ul></div>
   <p class="note">Why does more gain make it worse? The motors need ~80 ms to spin up. That lag means the push arrives late, and a late push can feed energy into the swing instead of removing it.</p>` });
 
 L.push({ title: 'D: the damper', preset: { kp: 6, ki: 0, kd: 3, tf: 0.02, start: { z: 0, sp: 5 } },
@@ -1084,16 +1588,16 @@ L.push({ title: 'D: the damper', preset: { kp: 6, ki: 0, kd: 3, tf: 0.02, start:
 
 L.push({ title: 'I: the memory', preset: { kp: 6, ki: 3, kd: 3, tf: 0.02, start: { z: 0, sp: 5 } },
   html: `<p>The integral term adds up error over time. As long as the drone sits below the target, I keeps growing until the droop is gone.</p>
-  <p>Look at the purple line in the Terms chart. It settles at about <b>9.8 N</b>: the integrator has <em>learned</em> the drone's weight. P and D then only handle the transients.</p>
+  <p>Look at the violet I line in the Terms chart. It settles at about <b>9.8 N</b>: the integrator has <em>learned</em> the drone's weight. P and D then only handle the transients.</p>
   <div class="try"><h3>Try it</h3><ul><li>Push K<sub>i</sub> to 12. The drone overshoots and swings slowly. The integrator keeps pushing after the target is reached because it remembers the past.</li><li>K<sub>i</sub>=25 makes the loop unstable.</li><li>Set K<sub>i</sub>=0.5. There's no overshoot, but the last bit of error takes ages to disappear.</li></ul></div>
   <p class="note">Every term has a cost. The integral removes steady-state error but adds phase lag (it reacts to the past), which erodes stability.</p>` });
 
 L.push({ title: 'Stability, poles and margins', preset: { kp: 10, ki: 0, kd: 0, tf: 0, start: { z: 0, sp: 5 } },
-  html: `<p>The pole map on the right shows the <b>closed-loop poles</b> of the linearized system. Each pole is one "mode" of the response:</p>
-  <ul><li>Horizontal position = decay rate. Left of the axis decays; right grows. The red half-plane is unstable.</li><li>Vertical position = oscillation frequency in rad/s.</li><li>The dashed green lines mark damping ζ=0.7. Poles inside that wedge give little overshoot.</li></ul>
-  <p><b>Phase margin</b> is how much extra delay the loop can take before oscillating. Aim for 45–60°. <b>Gain margin</b> is how far you can raise the gain before instability. Aim for at least 6 dB.</p>
+  html: `<p>The Stability panel shows the <b>closed-loop poles</b> of the linearized system. Each pole is one "mode" of the response:</p>
+  <ul><li>Horizontal position = decay rate. Left of the axis decays; right grows. The red half-plane is unstable.</li><li>Vertical position = oscillation frequency in rad/s.</li><li>The green wedge marks damping ζ ≥ 0.7. Poles inside it give little overshoot.</li></ul>
+  <p><b>Phase margin</b> is how much extra delay the loop can take before oscillating. Aim for 45–60°, the green part of the gauge. <b>Gain margin</b> is how far you can raise the gain before instability. Aim for at least 6 dB.</p>
   <div class="widget" id="znBox"><h3>Ziegler–Nichols helper</h3>
-    <p style="font-size:13.5px;margin-bottom:8px">This setup is P-only near the edge. Nudge K<sub>p</sub> until the oscillation neither grows nor decays, then measure.</p>
+    <p style="font-size:13.5px;margin-bottom:10px">This setup is P-only near the edge. Nudge K<sub>p</sub> until the oscillation neither grows nor decays, then measure.</p>
     <div class="zn-read"><div><div class="l">Kp now</div><div class="v" id="znKp">—</div></div><div><div class="l">Period</div><div class="v" id="znTu">—</div></div><div><div class="l">Swing</div><div class="v" id="znTr">—</div></div></div>
     <button class="btn small" id="znMeasure" type="button">Use as K<sub>u</sub>, T<sub>u</sub></button>
     <div id="znTable"></div></div>
@@ -1102,21 +1606,21 @@ L.push({ title: 'Stability, poles and margins', preset: { kp: 10, ki: 0, kd: 0, 
 L.push({ title: 'Integral windup', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, aw: 'none', start: { z: 3, sp: 3, hover: true },
     script: [{ t: 1, fn: () => setTether(true) }, { t: 7, fn: () => setTether(false) }] },
   html: `<p>Real actuators have limits. When the drone is held down, or the target is far away, the motors saturate at 25 N. The integrator doesn't know this and keeps accumulating error.</p>
-  <p>In this setup a ground crew tethers the drone at t=1 s and releases it at t=7 s. Watch the purple I term climb far above what the motors can ever deliver. After release the drone <b>rockets past the target</b>. It stays at full thrust until the integrator unwinds, which requires overshooting for a long time.</p>
-  <div class="try"><h3>Try it</h3><ul><li>Switch <b>Anti-windup</b> to <em>clamping</em> and press <b>Load this setup</b> again. Clamping stops integrating while the output is saturated and the error pushes further into saturation.</li><li>Try <em>back-calculation</em>, which bleeds the integrator down toward what the motors can actually deliver.</li><li>Windup also happens without a tether. With anti-windup off, jump the target from 2 m to 8 m.</li></ul></div>
+  <p>In this flight a ground crew tethers the drone at t=1 s and releases it at t=7 s. Watch the violet I term climb far above what the motors can ever deliver. After release the drone <b>rockets past the target</b>. The contrail turns red while the motors are saturated.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Switch <b>Anti-windup</b> to <em>clamping</em> and press <b>Fly this setup</b> again. Clamping stops integrating while the output is saturated and the error pushes further into saturation.</li><li>Try <em>back-calculation</em>, which bleeds the integrator down toward what the motors can actually deliver.</li><li>Windup also happens without a tether. With anti-windup off, jump the target from 2 m to 8 m.</li></ul></div>
   <p class="note">On real machines windup shows up after a stalled valve, a heater at full power, a motor against an end stop, or a drone sitting on the ground before takeoff.</p>` });
 
 L.push({ title: 'Derivative kick', preset: { kp: 8, ki: 4, kd: 4, tf: 0, dsrc: 'err', noise: 0, start: { z: 3, sp: 3, hover: true },
     script: [{ t: 1.5, fn: () => setSetpoint(6) }, { t: 6, fn: () => setSetpoint(3) }, { t: 10.5, fn: () => setSetpoint(6) }, { t: 15, fn: () => setSetpoint(3) }] },
   html: `<p>When the target jumps, the error jumps instantly. Its derivative for that one sample is huge: a 3 m step over a 10 ms tick gives de/dt = 300 m/s. Multiplied by K<sub>d</sub>=4, D demands <b>1200 N</b> for a single sample.</p>
-  <p>Watch the pink spikes in the Terms chart and the thrust slamming into its limits. On a real drone that's a jolt to the motors and the frame. On a valve it's a hammer blow.</p>
+  <p>Watch the pink D spikes in the Terms chart and the thrust slamming into its limits. On a real drone that's a jolt to the motors and the frame. On a valve it's a hammer blow.</p>
   <div class="try"><h3>Try it</h3><ul><li>Switch <b>Derivative acts on</b> to <em>measurement</em>. The drone's altitude can't jump, so the spikes disappear, and the response is otherwise almost the same.</li><li>Notice the pole map doesn't change. The loop dynamics are identical; only the response to the target changes.</li></ul></div>
   <p class="note">This is why most industrial PIDs take the derivative of the measured value (sometimes called PI-D). Many also apply only part of the target change to P (setpoint weighting).</p>` });
 
 L.push({ title: 'Noise and the derivative filter', preset: { kp: 8, ki: 4, kd: 4, tf: 0, noise: 0.03, start: { z: 4, sp: 4, hover: true } },
   html: `<p>Real sensors are noisy. This altimeter now has 3 cm of random noise. It looks harmless on the altitude chart, but D differentiates it: 3 cm of change in 10 ms reads as 3 m/s of speed.</p>
-  <p>Check <b>Motor jitter</b> under the charts and listen with <b>Sound</b> on. The motors are thrashing. On hardware this means heat, wear, vibration, and a drone that sounds sick.</p>
-  <div class="try"><h3>Try it</h3><ul><li>Raise the <b>derivative filter</b> τ<sub>f</sub> to 30–50 ms. The jitter drops sharply.</li><li>Push τ<sub>f</sub> to 250 ms. The filter now lags so much that D stops damping, and the drone starts to wobble. Watch the phase margin.</li><li>Set the control rate to 200 Hz with no filter. Faster sampling makes derivative noise <em>worse</em>, because the same noise is divided by a smaller time step.</li><li>Lowering K<sub>d</sub> also helps, at the cost of damping.</li></ul></div>
+  <p>Check <b>Jitter</b> in the telemetry panel, watch the drone shiver, and listen with <b>Sound</b> on. The motors are thrashing. On hardware this means heat, wear, vibration, and a drone that sounds sick.</p>
+  <div class="try"><h3>Try it</h3><ul><li>Raise the <b>derivative filter</b> τ<sub>f</sub> to 30–50 ms. The jitter drops sharply.</li><li>Push τ<sub>f</sub> to 250 ms. The filter now lags so much that D stops damping, and the drone starts to wobble. Watch the phase margin needle.</li><li>Set the control rate to 200 Hz with no filter. Faster sampling makes derivative noise <em>worse</em>, because the same noise is divided by a smaller time step.</li><li>Lowering K<sub>d</sub> also helps, at the cost of damping.</li></ul></div>
   <p class="note">A rule of thumb is to set τ<sub>f</sub> between K<sub>d</sub>/K<sub>p</sub>/20 and K<sub>d</sub>/K<sub>p</sub>/5. Noise is also why many practical loops are just PI.</p>` });
 
 L.push({ title: 'Dead time', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, delay: 0.15, start: { z: 4, sp: 4, hover: true },
@@ -1128,15 +1632,15 @@ L.push({ title: 'Dead time', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, delay: 0.1
 
 L.push({ title: 'Disturbances and feedforward', preset: { kp: 8, ki: 4, kd: 4, tf: 0.02, start: { z: 4, sp: 4, hover: true },
     script: [{ t: 2, fn: () => gust(-22) }, { t: 5, fn: () => { cfg.mass = 1.6; syncUI(); scheduleAnalyze(); } }, { t: 11, fn: () => { cfg.wind = -5; syncUI(); } }, { t: 16, fn: () => { cfg.wind = 0; cfg.mass = 1; syncUI(); scheduleAnalyze(); } }] },
-  html: `<p>A controller's real job is often <b>disturbance rejection</b>: holding position while the world pushes on it. This run applies a downward gust at 2 s, picks up a 600 g payload at 5 s, adds a downdraft at 11 s, and removes both at 16 s.</p>
+  html: `<p>A controller's real job is often <b>disturbance rejection</b>: holding position while the world pushes on it. This flight applies a downward gust at 2 s, picks up a 600 g payload at 5 s, adds a downdraft at 11 s, and removes both at 16 s.</p>
   <p>P and D react to the gust quickly. The payload and downdraft are permanent, so only I can fully cancel them. Watch the I term step up to the new weight.</p>
-  <div class="try"><h3>Try it</h3><ul><li>Set K<sub>i</sub>=1 and reload. Each sag takes much longer to recover.</li><li>Turn on <b>Hover feedforward</b>. The controller now adds the nominal 9.81 N directly, so the integrator only covers the difference. Takeoffs from the ground get faster and windup gets smaller, because I never has to climb all the way to 9.8 N.</li><li>Use the Gust buttons and the wind slider yourself.</li></ul></div>
+  <div class="try"><h3>Try it</h3><ul><li>Set K<sub>i</sub>=1 and fly again. Each sag takes much longer to recover.</li><li>Turn on <b>Hover feedforward</b>. The controller now adds the nominal 9.81 N directly, so the integrator only covers the difference. Takeoffs get faster and windup gets smaller, because I never has to climb all the way to 9.8 N.</li><li>Use the Gust buttons and the wind slider yourself.</li></ul></div>
   <p class="note">Feedforward handles what you already know (weight, known loads, planned moves). Feedback cleans up everything else. The best loops use both.</p>` });
 
 L.push({ title: 'Flight test challenge', preset: { kp: 3, ki: 0.5, kd: 1, tf: 0, noise: 0.015, delay: 0.05, start: { z: 0, sp: 0 } }, challenge: true,
   html: `<p>Time to tune under realistic conditions: 1.5 cm sensor noise, 50 ms of sensor delay, and poor starting gains. The test flight takes off to 5 m, takes a 12 N downward gust at 8 s, picks up a 500 g payload at 12 s, then descends to 2 m at 17 s. Noise and delay are fixed for the test; everything in the Gains and Controller panels is yours to change.</p>
   <div class="widget"><h3>Test flight</h3>
-    <button class="btn small primary" id="chRun" type="button">Run test flight</button>
+    <button class="btn primary small" id="chRun" type="button">Run test flight</button>
     <div class="score" id="chScore"></div></div>
   <div class="try"><h3>Suggested workflow</h3><ul><li>Adjust gains, filter, and anti-windup, then run again. Each run restarts from the ground with your current settings.</li><li>The lesson 1 tuning passes four of six. Its motors chatter too much and it sags too far under the payload.</li><li>Filter the derivative first, then you can afford more K<sub>p</sub> and K<sub>d</sub>.</li><li>Stuck? Lesson 12 has a step-by-step recipe, or <button class="btn small" id="chReveal" type="button">show one passing tuning</button></li></ul></div>` });
 
@@ -1156,21 +1660,29 @@ L.push({ title: 'A practical tuning recipe', preset: { start: { z: 0, sp: 4 } },
 
 let cur = 0;
 let lessonTick = null;
+const pad2 = n => String(n).padStart(2, '0');
 function renderNav() {
-  const nav = $('lessonNav'); nav.innerHTML = '';
-  L.forEach((l, i) => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = i + 1; b.title = l.title;
-    b.setAttribute('aria-label', 'Lesson ' + (i + 1) + ': ' + l.title);
-    if (i === cur) b.setAttribute('aria-current', 'true');
-    b.onclick = () => openLesson(i, true);
-    nav.appendChild(b);
+  const nav = $('lessonNav');
+  if (!nav.children.length) {
+    L.forEach((l, i) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'node'; b.textContent = i + 1;
+      b.dataset.title = pad2(i + 1) + ' · ' + l.title;
+      b.setAttribute('aria-label', 'Lesson ' + (i + 1) + ': ' + l.title);
+      b.onclick = () => openLesson(i, true);
+      li.appendChild(b); nav.appendChild(li);
+    });
+  }
+  [...nav.querySelectorAll('.node')].forEach((b, i) => {
+    b.classList.toggle('done', i < cur);
+    if (i === cur) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
   });
+  nav.style.setProperty('--prog', (cur / (L.length - 1)).toFixed(3));
+  $('planCount').textContent = pad2(cur + 1) + ' / ' + L.length;
 }
-function applyPreset(p, keepControllerOpts = false) {
-  const keep = keepControllerOpts ? { aw: cfg.aw, dsrc: cfg.dsrc, tf: cfg.tf, ff: cfg.ff } : {};
+function applyPreset(p) {
   Object.assign(cfg, DEFAULTS);
   for (const k of Object.keys(DEFAULTS)) if (p[k] !== undefined) cfg[k] = p[k];
-  Object.assign(cfg, keep);
   syncUI();
   resetSim({ ...(p.start || {}), script: p.script });
   analyze();
@@ -1179,8 +1691,11 @@ let lastLoaded = -1;
 function openLesson(i, load) {
   cur = i; renderNav();
   const l = L[i];
-  $('lessonBody').innerHTML = `<div class="eyebrow">Lesson ${i + 1} of ${L.length}</div><h2>${l.title}</h2>${l.html}`;
-  $('lessonBody').scrollTop = 0;
+  const body = $('lessonBody');
+  body.innerHTML = `<div class="eyebrow">Lesson ${pad2(i + 1)}</div><h2>${l.title}</h2>${l.html}`;
+  [...body.children].forEach((c, k) => c.style.setProperty('--k', k));
+  body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');
+  body.scrollTop = 0;
   $('prevLesson').disabled = i === 0; $('nextLesson').disabled = i === L.length - 1;
   lessonTick = null;
   if (load) { applyPreset(l.preset); lastLoaded = i; }
@@ -1191,10 +1706,9 @@ function openLesson(i, load) {
 $('prevLesson').onclick = () => openLesson(Math.max(0, cur - 1), true);
 $('nextLesson').onclick = () => openLesson(Math.min(L.length - 1, cur + 1), true);
 $('loadLesson').onclick = () => {
-  // reloading the same lesson keeps controller options so users can compare fixes (e.g. anti-windup)
-  const same = lastLoaded === cur;
+  // flying the same lesson again keeps the user's controller changes so fixes (e.g. anti-windup) can be compared
   const p = L[cur].preset;
-  if (same) {
+  if (lastLoaded === cur) {
     const keep = { aw: cfg.aw, dsrc: cfg.dsrc, tf: cfg.tf, ff: cfg.ff, kp: cfg.kp, ki: cfg.ki, kd: cfg.kd, noise: cfg.noise, delay: cfg.delay, rate: cfg.rate };
     Object.assign(cfg, DEFAULTS, keep);
     syncUI();
@@ -1224,8 +1738,8 @@ function initZN() {
       ['PI only', 0.45 * Ku, 0.54 * Ku / Tu, 0],
     ];
     meas = rows;
-    $('znTable').innerHTML = `<p class="fine" style="margin-top:6px">K<sub>u</sub> = ${Ku.toFixed(1)}, T<sub>u</sub> = ${Tu.toFixed(2)} s${a.trend !== 'sustained' ? ' (the swing is ' + a.trend + ', so this is only a rough estimate)' : ''}</p>
-      <table><thead><tr><th>Rule</th><th>Kp</th><th>Ki</th><th>Kd</th><th></th></tr></thead><tbody>
+    $('znTable').innerHTML = `<p class="fine" style="margin-top:8px">K<sub>u</sub> = ${Ku.toFixed(1)}, T<sub>u</sub> = ${Tu.toFixed(2)} s${a.trend !== 'sustained' ? ' (the swing is ' + a.trend + ', so this is only a rough estimate)' : ''}</p>
+      <table><thead><tr><th>RULE</th><th>KP</th><th>KI</th><th>KD</th><th></th></tr></thead><tbody>
       ${rows.map((r, k) => `<tr><td>${r[0]}</td><td>${r[1].toFixed(1)}</td><td>${r[2].toFixed(1)}</td><td>${r[3].toFixed(2)}</td><td><button class="btn small" type="button" data-zn="${k}">Fly</button></td></tr>`).join('')}
       </tbody></table>`;
     $('znTable').querySelectorAll('[data-zn]').forEach(b => b.onclick = () => {
@@ -1240,25 +1754,25 @@ function initZN() {
 function initChallenge() {
   let run = null;
   const crit = [
-    ['Takeoff overshoot ≤ 10%', r => r.os, v => v.toFixed(1) + '%', v => v <= 10],
-    ['Settles within 4 s (±2%)', r => r.settle, v => isFinite(v) ? v.toFixed(2) + ' s' : 'never', v => v <= 4],
-    ['Gust dip ≤ 0.9 m', r => r.gust, v => v.toFixed(2) + ' m', v => v <= 0.9],
-    ['Payload sag ≤ 0.5 m', r => r.payload, v => v.toFixed(2) + ' m', v => v <= 0.5],
-    ['Hover motor jitter ≤ 1.5 N', r => r.jit, v => v.toFixed(2) + ' N', v => v <= 1.5],
-    ['Final error ≤ 3 cm', r => r.fin, v => (v * 100).toFixed(1) + ' cm', v => v <= 0.03],
+    ['Takeoff overshoot ≤ 10%', r => r.os, v => v.toFixed(1) + '%', v => v <= 10, 1],
+    ['Settles within 4 s (±2%)', r => r.settle, v => isFinite(v) ? v.toFixed(2) + ' s' : 'never', v => v <= 4, 1],
+    ['Gust dip ≤ 0.9 m', r => r.gust, v => v.toFixed(2) + ' m', v => v <= 0.9, 2],
+    ['Payload sag ≤ 0.5 m', r => r.payload, v => v.toFixed(2) + ' m', v => v <= 0.5, 3],
+    ['Hover motor jitter ≤ 1.5 N', r => r.jit, v => v.toFixed(2) + ' N', v => v <= 1.5, 99],
+    ['Final error ≤ 3 cm', r => r.fin, v => (v * 100).toFixed(1) + ' cm', v => v <= 0.03, 99],
   ];
   function render(done) {
     const el = $('chScore'); if (!el) return;
-    if (!run) { el.innerHTML = '<div><span style="color:var(--ink-3)">Press Run to fly the test sequence (25 s).</span></div>'; return; }
+    if (!run) { el.innerHTML = '<div class="row"><span style="color:var(--ink-3)">Press Run to fly the 25-second test sequence.</span></div>'; return; }
     const res = run.res;
     let passed = 0;
-    el.innerHTML = crit.map(([name, get, fmt, ok]) => {
+    el.innerHTML = crit.map(([name, get, fmt, ok, phaseReady]) => {
       const v = get(res);
-      const avail = v !== null && v !== undefined && (done || name.startsWith('Takeoff') && run.phase > 0 || name.startsWith('Settles') && run.phase > 0 || name.startsWith('Gust') && run.phase > 1 || name.startsWith('Payload') && run.phase > 2);
+      const avail = v !== null && v !== undefined && (done || run.phase >= phaseReady);
       if (avail && ok(v)) passed++;
       const chip = !avail ? '<span class="chip wait">…</span>' : ok(v) ? '<span class="chip pass">PASS</span>' : '<span class="chip fail">FAIL</span>';
-      return `<div><span>${name}</span><span class="mono">${avail ? fmt(v) : ''} ${chip}</span></div>`;
-    }).join('') + (done ? `<div style="margin-top:4px"><b>${passed} / ${crit.length} passed.</b>&nbsp;<span style="color:var(--ink-2)">${passed === crit.length ? 'Flight test signed off.' : 'Adjust and fly again.'}</span></div>` : '');
+      return `<div class="row"><span>${name}</span><span class="mono">${avail ? fmt(v) : ''} ${chip}</span></div>`;
+    }).join('') + (done ? `<div class="verdict"><b>${passed} / ${crit.length} passed.</b> <span style="color:var(--ink-2)">${passed === crit.length ? 'Flight test signed off.' : 'Adjust and fly again.'}</span></div>${passed === crit.length ? '<div class="stamp">SIGNED OFF</div>' : ''}` : '');
   }
   render(false);
   $('chReveal').onclick = () => { Object.assign(cfg, { kp: 12, ki: 6, kd: 5, tf: 0.06, dsrc: 'meas', aw: 'clamp', ff: false, rate: 100 }); syncUI(); analyze(); };
@@ -1291,12 +1805,20 @@ function initChallenge() {
 }
 
 // ---------- boot ----------
+// split the logotype into letters for the boot animation
+let n = 0;
+document.querySelectorAll('.logo .w').forEach(w => { w.innerHTML = [...w.textContent].map(ch => `<span class="ch" style="--n:${n++}">${ch}</span>`).join(''); });
+buildKnobs();
+layoutStage();
 let startLesson = 0;
 try { const s = parseInt(localStorage.getItem('pidlab-lesson'), 10); if (s >= 0 && s < L.length) startLesson = s; } catch (e) {}
-syncUI();
+syncUI(); markSeg('speedSeg', '1');
 resetSim({ z: 0, sp: 4 });
 openLesson(startLesson, true);
-new ResizeObserver(() => drawPoles()).observe($('poles'));
+const relayout = () => { layoutStage(); document.querySelectorAll('.seg').forEach(placeInd); };
+new ResizeObserver(relayout).observe(document.body);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+setTimeout(() => document.body.classList.remove('boot'), 2600);
 requestAnimationFrame(frame);
 })();
 </script>
